@@ -1,0 +1,55 @@
+{% extends "base.html" %}
+
+{% block title %}Index{% endblock %}
+{% block head %}
+    {{ parent() }}
+<script src="templates/static/js/js.cookie.js"></script>
+
+{% endblock %}
+
+{% block content %}
+
+
+
+    <div id="c_tha" aria-labelledby="headingThree">
+
+            <div class="row mt-4">
+                <div class="col-lg-12 col-m-12 col-sm-12 col-12">
+                   <div class="ol d-flex justify-content-center">
+                   <a href="?p=chart&chart=d" class="{% if (_get['chart'] == 'd') or (_get['chart'] == '')%}active{% endif %} ce nr">24 Hours</a>
+                   <a href="?p=chart&chart=w" class="{% if _get['chart'] == 'w'%}active{% endif %} ce nr">Week</a>
+                   <a href="?p=chart&chart=m" class="{% if _get['chart'] == 'm'%}active{% endif %} ce nr">Month</a>
+                   </div>
+                </div>
+            </div>
+            <div class="row mt-4">
+                   <canvas id="chartjs-tmp" class="chartjs" height="200" style="display: block;"></canvas>
+                   <script>new Chart(document.getElementById("chartjs-tmp"),{"type":"line","data": {
+                                                                                                 "labels":[{{ x_axis_string|raw }}],
+                                                                                                 "datasets":[{
+                                                                                                       "label":"Temperature",
+                                                                                                       "data":[{{ temperature_string|raw }}],
+                                                                                                       "fill":false,
+                                                                                                       "borderColor":"rgb(75, 192, 192)",
+                                                                                                       "lineTension":0.1
+                                                                                                       },{
+                                                                                                       "label":"Humidity",
+                                                                                                       "data":[{{ humidity_string|raw }}],
+                                                                                                       "fill":false,
+                                                                                                       "borderColor":"rgb(0, 204, 102)",
+                                                                                                       "lineTension":0.1}
+                                                                                                       //{
+                                                                                                       //"label":"CO2",
+                                                                                                       //"data":[{{ co2_string|raw }}],
+                                                                                                       //"fill":false,
+                                                                                                       //"borderColor":"rgb(255, 128, 0)",
+                                                                                                       //"lineTension":0.1}
+                                                                                                       ],
+                                                                                                   }, 
+                                                                                                  "options":{scales:{yAxes:[{ticks:{beginAtZero:true}}]}}});</script>
+            </div>
+
+
+    </div>
+
+{% endblock %}

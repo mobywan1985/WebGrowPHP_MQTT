@@ -1,0 +1,165 @@
+{% extends "base.html" %}
+
+{% block title %}Index{% endblock %}
+{% block head %}
+    {{ parent() }}
+<script>
+function setDelete(id) {
+ $("#del_uid").val(id);
+}
+
+function setReset(id) {
+ $("#pw_id_reset").val(id);
+}
+
+</script>
+{% endblock %}
+
+{% block content %}
+<div class="row">
+{% for user in users %}
+    <div class="col-lg-3 col-md-4 col-sm-6">
+            <div class="form-control-dark agv aew" style="height:90px;">
+            <div class="" style="position:absolute;top:0;right:0;font-size:18px;">
+                           <button class="btn btn-light p-0 mr-4 mt-2" onclick="setDelete({{user['id']}});" data-toggle="modal" data-target="#deleteUserModal" type="button" style="border-radius:30%;width:35px;height:35px;"><i style="font-size:20px;" class="mt-1 fas
+                           fa-trash"></i></button> 
+            </div>
+              <h5 class="bph text-warning">
+                {{user['fname']}} {{user['lname']}}
+              </h5>
+              <span class="bpi">{{user['username']}}</span>
+                 <a href="" role="button" data-toggle="modal" data-target="#pwReset"
+                 onclick="setReset({{user['id']}});"><small class="bpk text-success">Reset
+                 Password</small></a>
+            </div>
+    </div>
+{% endfor %}
+        <div class="col-lg-3 col-md-4 col-sm-6 col-12">
+            <div class="form-control-dark agv aew" style="height:90px;">
+            <a href="#"  data-toggle="modal" data-target="#createUser"><i style="font-size:40px;" class="fas fa-user-plus pl-2"></i></a>
+            </div>
+        </div>
+</div>
+
+
+<!-- Modal -->
+<div class="modal fade" id="deleteUserModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
+  <div class="modal-dialog" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="deleteUserLabel">Delete User</h5>
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body text-light">
+        Are you sure you wish to delete this user?
+      </div>
+      <div class="model-footer">
+          <form method="post" action="">
+          <input name="del_uid" id="del_uid" style="display:none">
+          <button type="button" class="nz aye" data-dismiss="modal">Cancel</button>
+          <button type="submit" name="delete_user" class="nz aye">
+            <strong>Delete</strong>
+          </button>
+          </form>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+
+
+<!-- Modal -->
+<div class="modal fade" id="pwReset" tabindex="-1" role="dialog" aria-labelledby="" aria-hidden="true">
+  <div class="modal-dialog" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="pwResetLabel">Reset Password</h5>
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <form method="post" action="">
+      <div class="modal-body">
+               <input style="display:none" id="pw_id_reset" name="pw_id_reset" value="">
+               <div class="input-group mb-1">
+                 <div class="input-group-prepend">
+                   <span style="width:100px;" class="input-group-text">Password</span>
+                 </div>
+                 <input name="pw_reset" type="password" class="form-control" aria-label="" value="" id="pw_reset">
+               </div>
+
+      </div>
+      <div class="model-footer">
+          <button type="button" class="nz aye" data-dismiss="modal">Cancel</button>
+          <button type="submit" name="reset_password" class="nz aye">
+            <strong>Reset</strong>
+          </button>
+      </div>
+      </form>
+
+
+    </div>
+  </div>
+</div>
+
+
+<!-- Modal -->
+<div class="modal fade" id="createUser" tabindex="-1" role="dialog" aria-labelledby="" aria-hidden="true">
+  <div class="modal-dialog" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="createUserLabel">Create User</h5>
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <form method="post" action="">
+      <div class="modal-body">
+               <div class="input-group mb-1">
+                 <div class="input-group-prepend">
+                   <span style="width:100px;" class="input-group-text">First Name</span>
+                 </div>
+                 <input name="create_fname" type="text" class="form-control" aria-label="" value="">
+               </div>
+
+               <div class="input-group mb-1">
+                 <div class="input-group-prepend">
+                   <span style="width:100px;" class="input-group-text">Last Name</span>
+                 </div>
+                 <input name="create_lname" type="text" class="form-control" aria-label="" value="">
+               </div>
+
+
+               <div class="input-group mb-1">
+                 <div class="input-group-prepend">
+                   <span style="width:100px;" class="input-group-text">Username</span>
+                 </div>
+                 <input name="create_username" type="text" class="form-control" aria-label="" value="">
+               </div>
+
+               <div class="input-group mb-1">
+                 <div class="input-group-prepend">
+                   <span style="width:100px;" class="input-group-text">Password</span>
+                 </div>
+                 <input name="create_password" type="password" class="form-control" aria-label="" value="">
+               </div>
+
+      </div>
+      <div class="model-footer">
+          <button type="button" class="nz aye" data-dismiss="modal">Cancel</button>
+          <button type="submit" name="create_user" class="nz aye">
+            <strong>Create</strong>
+          </button>
+      </div>
+      </form>
+
+
+    </div>
+  </div>
+</div>
+
+
+{% endblock %}

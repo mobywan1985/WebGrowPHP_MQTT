@@ -1,0 +1,210 @@
+<!doctype html>
+<html>
+
+<head>
+{% block head %}
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="description" content="">
+    <meta name="keywords" content="">
+    <meta name="author" content="">
+    <link rel="icon" type="image/png" href="templates/static/img/webgrow_icon.png" />
+    <title>
+
+       WebGrow Automation
+
+    </title>
+
+    <link href="https://fonts.googleapis.com/css?family=Roboto:300,400,500,700,400italic" rel="stylesheet">
+
+
+    <style>
+      /* note: this is a hack for ios iframe for bootstrap themes shopify page */
+      body {
+        width: 1px;
+        min-width: 100%;
+        *width: 100%;
+      }
+      
+    </style>
+    <link rel="stylesheet" href="templates/static/fonts/fontawesome/css/all.css">
+    <link href="templates/static/css/bootstrap.css" rel="stylesheet">
+    <link href="templates/static/css/webgrow.css" rel="stylesheet">
+    <link href="templates/static/css/toolkit.css" rel="stylesheet">
+    <script src="templates/static/js/jquery.min.js"></script>
+    <script src="templates/static/js/popper.min.js"></script>
+    <script src="templates/static/js/chart.js"></script>
+    <script src="templates/static/js/tablesorter.min.js"></script>
+    <script src="templates/static/js/bootstrap.min.js"></script>
+    <script src="templates/static/js/raphael-2.1.4.min.js"></script>
+    <script src="templates/static/js/justgage.js"></script>
+    <script src="templates/static/js/mqttws31.min.js" type="text/javascript"></script>
+    
+    
+    
+    
+{% endblock %}
+<script>
+
+
+// Create a client instance
+client = new Paho.MQTT.Client(location.hostname, Number(9001), "web_js_client");
+var python_connected = false;
+var temperature = null;
+var humidity = null;
+// set callback handlers
+client.onConnectionLost = onConnectionLost;
+client.onMessageArrived = onMessageArrived;
+
+// connect the client
+client.connect({onSuccess:onConnect});
+
+// called when the client connects
+function onConnect() {
+  // Once a connection has been made, make a subscription and send a message.
+  console.log("onConnect");
+  client.subscribe("php_function", {qos: 2});
+  client.subscribe("php_return_status", {qos: 2});
+  sendMessage('0', 'get_status');
+  {{py_cmd|raw}}
+}
+
+
+function sendMessage(id, msg)
+{
+  myArray = {'device' : id, 'function' : msg};
+  myArrayJsonEncoded = JSON.stringify(myArray);
+  message = new Paho.MQTT.Message(myArrayJsonEncoded);
+  message.destinationName = "php_function";
+  client.send(message);
+}
+// called when the client loses its connection
+function onConnectionLost(responseObject) {
+  if (responseObject.errorCode !== 0) {
+    console.log("onConnectionLost:"+responseObject.errorMessage);
+  }
+}
+
+// called when a message arrives
+function onMessageArrived(message) {
+  console.log("onMessageArrivedTopic:"+message.destinationName);
+  console.log("onMessageArrived:"+message.payloadString);
+  if(message.destinationName == 'php_return_status')
+     {
+            python_connected = true;
+            msg = JSON.parse(message.payloadString);
+            temperature = msg[0];
+            humidity = msg[1];
+            status_bar = '<span class="bqs d-none vk"></span>'+
+            '<div class="p-2 text-success" >'+
+               '<span class="bpi">Temperature </span>'+Math.round(temperature)+'F'+
+            '</div>'+
+            '<span class="bqs d-none vk"></span>'+
+            '<div class="p-2 text-info">'+
+               '<span class="bpi">Humidity </span>'+Math.round(humidity)+'%'+
+            '</div>';
+            $('#status_bar').html(status_bar);
+            if (typeof g !== 'undefined')
+               g.refresh(temperature);
+            if (typeof h !== 'undefined')
+               h.refresh(humidity);
+
+     }
+
+}
+window.addEventListener("load", function () {
+    setTimeout(loadStatus, 5000);
+}, false);
+
+function loadStatus() {
+         if(!python_connected)
+          {
+            status_bar = '<span class="bqs d-none vk"></span>'+
+            '<div class="alert alert-danger p-1">Python Service Offline!</div>';
+            python_status = '<div class="alert alert-danger">Python Service is not running. Please restart Python Service!</div>';
+            $('#status_bar').html(status_bar);
+            $('#python_status').html(python_status);
+          }
+
+}
+</script>
+
+</head>
+
+<body>
+<div class="bqh">
+<nav class="ch">
+    <a class="bqi" href="/dashboard/">
+      <span class="fas fa-seedling"></span>
+    </a>
+    <div class="bqm">
+      <ul class="nav pb bqk zh">
+      {% set m_header = 'Home' %}
+       {% for menu in nav_menu %}
+           {% set psel = '' %}
+           {% if _get.p == menu.m_url %}
+               {% set psel = 'active' %}
+               {% set m_header = menu.m_header %}
+           {% endif %}
+
+           {% if menu.m_enabled == 1 %}
+
+             <li class="pa">
+               <a class="oy {{ psel }}" href="?p={{ menu.m_url }}" title="" data-toggle="tooltip" data-placement="right" data-container="body" data-original-title="{{ menu.m_name }}">
+                 <span class="{{ menu.m_icon }}"></span>
+                 <small class="bql vi">{{ menu.m_name }}</small>
+               </a>
+             </li>
+
+           {% endif %}
+       {% endfor %}
+      </ul>
+    </div>
+  </nav>
+  <div class="bw">
+
+
+<div class="bqn">
+      <div class="bqo">
+        <h6 class="bqq">Dashboard</h6>
+        <h3 class="bqp">{{m_header}}</h3>
+      </div>
+
+      <div class="bqr">
+        <div class="bpy bqt">
+          <span class="bv bbc"></span>
+          <input disabled style="padding-left:30px;" type="text" id="datepicker1" class="form-control-dark" value='{{ "now"|date("m/d/Y") }}'>
+        </div>
+        <div class="ol" id="status_bar">
+        
+           <span class="bqs d-none vk"></span>
+            <div class="p-2 text-success" >
+               <span class="bpi">Temperature </span>{{temperature}}F
+            </div>
+            <span class="bqs d-none vk"></span>
+            <div class="p-2 text-info">
+               <span class="bpi">Humidity </span>{{humidity}}%
+            </div>
+
+        
+        </div>
+      </div>
+</div>  
+<hr class="aee afr">  
+
+
+
+
+
+    {% block content %}
+    {% endblock %}
+    {% block footer %}
+    {% endblock %}
+  </div>
+</div>
+
+    <script src="templates/static/js/webgrow.js"></script>
+    
+</body>
+</html>

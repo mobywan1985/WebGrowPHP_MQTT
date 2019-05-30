@@ -1,0 +1,70 @@
+{% extends 'base.html' %}
+
+{% block head %}
+{{ parent() }}
+<script>
+
+</script>
+{% endblock %}
+
+{% block content %}
+
+<form method="post" action="/dashboard/?p=log&device={{ _get.device }}">
+
+
+<div class="container p-0">
+<form method="post" id="log_form" action=""> 
+  <input style="display:none;" name="clr_log" id="clr_log" value="{{deviceLog[0]['d_id']}}">
+  <div class="row">
+
+<div class="col-12 col-sm-12 col-md-2 col-lg-2 col-xl-2">
+<ul class="nav axr nav-stacked zh">
+  <li class="axq">Devices</li>
+  {% for device in devices %}
+    <li class="pa">
+    <a class="oy {% if device['id'] == _get.device %}active{% endif %}" href="?p=log&device={{device['id']}}">{{device['d_name']}}</a>
+    </li>
+  {% endfor %}
+</ul>
+</div>
+
+   <div class="col-12 col-sm-12 col-md-10 col-lg-10 col-xl-10">
+            <div class="border border-light rounded p-2 mb-2">
+              <h5 class="bph text-warning">
+                History
+              </h5>
+              <span class="bpi">{{deviceName}}</span>
+                 <a href="#" onclick="$(this).closest('form').submit();"  name="clearLog" role="button">
+                 <small class="bpk text-success">Clear</small></a>
+                 <hr class="aee pb-0">
+                 <div class="container ml-0 pl-0">
+                 {% for log in deviceLog %}
+                    <div class="justify-content-start">
+                    <span class="">{{protocols[log.d_protocol].d_genericname}}</span>
+                    <span class="bpi">{%if log.d_protocol == 0%}{{log.d_gpio}}{%else%}{{log.d_ip}}{%endif%}</span>
+                    {% if log.runstate %}
+                       <small class="bpk text-success">On</small>
+                    {% else %}
+                       <small class="bpk text-danger">Off</small>
+                    {% endif %}
+                    <span class="bpi float-right">{{ log.runtime|date('m/d/y g:i A') }}</span>
+                    <br/>
+                    </div>
+                 {% endfor %}
+                 </div>
+            </div>
+
+   </div>
+  </div>
+ </form>
+</div>
+
+
+
+
+
+
+
+
+
+{% endblock %} 

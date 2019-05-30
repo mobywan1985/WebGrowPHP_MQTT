@@ -1,0 +1,256 @@
+{% extends "base.html" %}
+
+{% block title %}Index{% endblock %}
+{% block head %}
+    {{ parent() }}
+<script src="templates/static/js/js.cookie.js"></script>
+<script>
+function sendState(id, gpio, state)
+{
+
+if(state)
+  func = 'ON';
+else
+  func = 'OFF';
+message = new Paho.MQTT.Message(func);
+message.qos = 2;
+message.retained = false;
+message.destinationName = "cmnd/webgrow/device/"+id+"/POWER";
+client.send(message);
+
+var g; var h;
+}
+
+        $(document).ready(function() {
+          if(Cookies.get('siteState') == undefined)
+            Cookies.set('siteState', { cth: 1, cd: 1, tha: 1 }, { expires: 300, path: '' });
+          if(Cookies.getJSON('siteState').cth)
+             {
+             $('#c_cth').collapse('show');
+             $('#cth_btn').addClass('fa-chevron-up')
+             }
+          else
+             $('#cth_btn').addClass('fa-chevron-down')
+          if(Cookies.getJSON('siteState').cd)
+             {
+             $('#c_cd').collapse('show')
+             $('#cd_btn').addClass('fa-chevron-up')
+             }
+          else
+             $('#cd_btn').addClass('fa-chevron-down')
+          if(Cookies.getJSON('siteState').tha)
+             {
+             $('#c_tha').collapse('show')
+             $('#tha_btn').addClass('fa-chevron-up')
+             }
+          else
+             $('#tha_btn').addClass('fa-chevron-down')
+        });
+        
+        function setCookie(value){
+          cth_state = Cookies.getJSON('siteState').cth;
+          cd_state  = Cookies.getJSON('siteState').cd;
+          tha_state = Cookies.getJSON('siteState').tha;
+          if(value == 'cth')
+             {
+             cth_state = 1 - cth_state;
+             $('#cth_btn').toggleClass('fa-chevron-up')
+             $('#cth_btn').toggleClass('fa-chevron-down')
+             }
+          if(value == 'cd')
+             {
+             cd_state = 1 - cd_state;
+             $('#cd_btn').toggleClass('fa-chevron-up')
+             $('#cd_btn').toggleClass('fa-chevron-down')
+             }
+          if(value == 'tha')
+             {
+             tha_state = 1 - tha_state;
+             $('#tha_btn').toggleClass('fa-chevron-up')
+             $('#tha_btn').toggleClass('fa-chevron-down')
+             }
+          Cookies.set('siteState', { cth: cth_state, cd: cd_state, tha: tha_state }, { expires: 300, path: '' });
+        }
+        
+        
+  $( document ).ready(function() {
+       g = new JustGage({
+              id: "tempgauge",
+              value: 0,
+              min: 0,
+              max: 150,
+              width: 250,
+              height: 220,
+              gaugeWidthScale: 0.3,
+              valueFontColor: '#FFF',
+              relativeGaugeSize: true,
+              symbol: '°F',
+              levelColors:  ["#f9c802","#f9c802", "#a9d70b","#f9c802", "#ff0000"],
+              title: "Temperature"
+            });
+       h = new JustGage({
+              id: "humidgauge",
+              value: 0,
+              min: 0,
+              max: 100,
+              width: '250',
+              relativeGaugeSize: true,
+              height: 220,
+              gaugeWidthScale: 0.3,
+              valueFontColor: '#FFF',
+              symbol: '%',
+              levelColors:  ["#f9c802","#f9c802", "#a9d70b","#f9c802", "#ff0000"],
+              title: "Humidity"
+            });
+
+
+  });      
+        
+           
+</script>
+
+{% endblock %}
+
+{% block content %}
+
+
+
+
+
+  
+    <div class="dcard-header" id="headingOne">
+      <h6 class="mb-0">
+          <smal class="text-info"l>Current Temperature & Humidity</small>
+        <button class="btn btn-link btn-sm" onclick="setCookie('cth');" type="button" data-toggle="collapse" data-target="#c_cth" aria-expanded="true" aria-controls="collapseOne">
+        <i id="cth_btn" class="fas"></i>
+        </button>
+      </h6>
+    </div>
+    <div id="c_cth" class="collapse" aria-labelledby="headingOne">
+
+          <div class="row">
+                  <div class="col-lg-6 d-flex justify-content-around" id="tempgauge" style="height:220px;"></div>
+                  <div class="col-lg-6 d-flex justify-content-around" id="humidgauge" style="height:220px;"></div>
+             <script>
+          </script>
+          </div>
+
+    </div>
+  
+  
+    <div class="dcard-header" id="headingTwo">
+      <h6 class="mb-0">
+        <smal class="text-info"l>Current Devices</small>
+        <button class="btn btn-link btn-sm" type="button" onclick="setCookie('cd');" data-toggle="collapse" data-target="#c_cd" aria-expanded="false" aria-controls="collapseTwo">
+          <i id="cd_btn" class="fas"></i>
+        </button>
+      </h6>
+    </div>
+    <div id="c_cd" class="collapse" aria-labelledby="headingTwo">
+
+          <div class="row mt-2">
+          {% for device in devices %}
+              <div class="col-lg-3 col-md-4 col-sm-6">
+                      <div class="form-control-dark agv aew">
+                        <h5 class="bph text-warning">
+                          {{device['d_name']}}
+                        </h5>
+                        <span class="bpi">Device Status:</span>
+                        
+                        <div class="custom-control custom-switch float-right">
+                        <input {% if device['d_state'] %} checked {%endif%} type="checkbox" onChange="sendState('{{device['id']}}', '{{device['d_gpio']}}', $(this).is(':checked'));" class="custom-control-input" id="stateSwitch{{device['id']}}">
+                        <label class="custom-control-label" for="stateSwitch{{device['id']}}"></label>
+                        </div>
+
+                        
+                        <br/><span class="bpi">Last Run:</span>
+                        <small class="bpk text-success">{{device['d_lastrun']|date('m-d-y g:i A')}}</small>
+                      </div>
+              </div>
+          {% endfor %}
+          </div>
+
+
+    </div>
+
+
+    <div class="dcard-header" id="headingThree">
+      <h6 class="mb-0">
+        <smal class="text-info">Temperature & Humidity Activity</small>
+        <button class="btn btn-link btn-sm" type="button" onclick="setCookie('tha');" data-toggle="collapse" data-target="#c_tha" aria-expanded="false" aria-controls="collapseThree">
+          <i id="tha_btn" class="fas"></i>
+        </button>
+      </h6>
+    </div>
+    <div id="c_tha" class="collapse" aria-labelledby="headingThree">
+
+            <div class="row mt-4">
+                <div class="col-lg-12 col-m-12 col-sm-12 col-12">
+                   <div class="ol d-flex justify-content-center">
+                   <a href="?chart=d" class="{% if (_get['chart'] == 'd') or (_get['chart'] == '')%}active{% endif %} ce nr">24 Hours</a>
+                   <a href="?chart=w" class="{% if _get['chart'] == 'w'%}active{% endif %} ce nr">Week</a>
+                   <a href="?chart=m" class="{% if _get['chart'] == 'm'%}active{% endif %} ce nr">Month</a>
+                   </div>
+                </div>
+            </div>
+            <div class="row mt-4">
+                   <canvas id="chartjs-tmp" class="chartjs" style="display: block;"></canvas>
+                   <script>new Chart(document.getElementById("chartjs-tmp"),{"type":"line", "data": {
+                                                                                                 "labels":[{{ x_axis_string|raw }}],
+                                                                                                 "datasets":[{
+                                                                                                       "label":"Temperature",
+                                                                                                       "data":[{{ temperature_string|raw }}],
+                                                                                                       "fill":false,
+                                                                                                       "borderColor":"rgb(75, 192, 192)",
+                                                                                                       "lineTension":0.1
+                                                                                                       },{
+                                                                                                       "label":"Humidity",
+                                                                                                       "data":[{{ humidity_string|raw }}],
+                                                                                                       "fill":false,
+                                                                                                       "borderColor":"rgb(0, 204, 102)",
+                                                                                                       "lineTension":0.1}
+                                                                                                       //{
+                                                                                                       //"label":"CO2",
+                                                                                                       //"data":[{{ co2_string|raw }}],
+                                                                                                       //"fill":false,
+                                                                                                       //"borderColor":"rgb(255, 128, 0)",
+                                                                                                       //"lineTension":0.1}
+                                                                                                       ],
+                                                                                                   }, 
+                                                                                                  "options":{scales:{yAxes:[{ticks:{beginAtZero:true}}]}}});</script>
+            </div>
+
+
+    </div>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+{% if settings['e_sensor'] %}
+
+{% endif %}
+
+{% if settings['e_sensor'] %}
+
+{% endif %}
+
+
+
+
+
+
+{% endblock %}

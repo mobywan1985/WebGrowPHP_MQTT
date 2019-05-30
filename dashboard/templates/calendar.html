@@ -1,0 +1,61 @@
+{% extends 'base.html' %}
+
+{% block head %}
+{{ parent() }}
+<link href="templates/static/css/calendar-core.css" rel="stylesheet">
+<link href="templates/static/css/calendar.css" rel="stylesheet">
+<link href='templates/static/css/calendar-bootstrap.css' rel='stylesheet' />
+<script src="templates/static/js/calendar-core.min.js"></script>
+<script src="templates/static/js/calendar.min.js"></script>
+<script src="templates/static/js/calendar-bootstrap.js"></script>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  var calendarEl = document.getElementById('calendar');
+
+  var calendar = new FullCalendar.Calendar(calendarEl, {
+    plugins: [ 'dayGrid', 'bootstrap' ],
+    themeSystem: 'bootstrap',
+    events: [{{event_string|raw}}],
+    eventRender: function(info) {
+      info.el.firstChild.innerHTML = info.event.title;
+      var tooltip = info.event.extendedProps.description;
+          $(info.el).attr("data-original-title", tooltip)
+          $(info.el).tooltip({ container: "body"})
+    
+    
+    }
+  });
+
+  calendar.render();
+});
+jQuery(document).ready(function () {
+  jQuery('[data-toggle="tooltip"]').tooltip();
+});
+
+$(function() {
+                $('.magnify').on('click', function() {
+                        alert('shittle');
+                        $('.imagepreview').attr('src', $(this).attr('src'));
+                        $('#imagemodal').modal('show');   
+                });
+});
+
+</script>
+{% endblock %}
+
+{% block content %}
+<div id='calendar'></div>
+
+<div class="modal fade" id="imagemodal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content">
+      <div class="modal-body">
+        <button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">&times;</span><span class="sr-only">Close</span></button>
+        <img src="" class="imagepreview" style="width: 100%;border-radius:5px;">
+      </div>
+    </div>
+  </div>
+</div>
+
+{% endblock %} 

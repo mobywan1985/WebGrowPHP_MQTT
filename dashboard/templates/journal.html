@@ -1,0 +1,418 @@
+{% extends 'base.html' %}
+
+{% block head %}
+{{ parent() }}
+<link href="templates/static/css/dropzone.css" rel="stylesheet">
+<script src="templates/static/js/dropzone.js"></script>
+<script>
+function setClear(clr_date) {
+ $("#clr_date").val(clr_date);
+}
+</script>
+<style>
+.btn-file {
+    position: relative;
+    overflow: hidden;
+}
+.btn-file input[type=file] {
+    position: absolute;
+    top: 0;
+    right: 0;
+    min-width: 100%;
+    min-height: 100%;
+    font-size: 100px;
+    text-align: right;
+    filter: alpha(opacity=0);
+    opacity: 0;
+    outline: none;
+    background: white;
+    cursor: inherit;
+    display: block;
+}
+</style>
+
+<script type="text/javascript">
+
+Dropzone.options.myDropzone= {
+    url: 'ajax_photo.php',
+    resizeWidth: 1920,
+    autoProcessQueue: false,
+    uploadMultiple: false,
+    parallelUploads: 1,
+    maxFiles: 1,
+    maxFilesize: 20,
+    resizeMimeType: 'image/jpeg',
+    acceptedFiles: 'image/*,image/jpeg,image/png,image/gif,image/jpg',
+    addRemoveLinks: true,
+    init: function () {
+
+        var myDropzone = this;
+
+        // Update selector to match your button
+        $("#submit-all").click(function (e) {
+            e.preventDefault();
+            myDropzone.processQueue();
+        });
+        
+        this.on('sending', function(file, xhr, formData) {
+            // Append all form inputs to the formData Dropzone will POST
+            var data = $('#myDropzone').serializeArray();
+            $.each(data, function(key, el) {
+                formData.append(el.name, el.value);
+            });
+            formData.append('jid', {{_get.jid}});
+        });
+        
+        
+        this.on("success", function(files, response) {
+//        alert(JSON.stringify(response));
+        location.reload();
+        // Gets triggered when the files have successfully been sent.
+        // Redirect user or notify of success.
+        });
+
+    }
+    
+    
+}
+
+$(function() {
+		$('.magnify').on('click', function() {
+			$('.imagepreview').attr('src', $(this).attr('src'));
+			$('#imagemodal').modal('show');   
+		});		
+});
+</script>
+
+
+
+{% endblock %}
+
+{% block content %}
+
+<div class="bs pb-4" data-example-id="">
+<div class="bpu">
+  <ul class="nav pb bpv bpx">
+{% for log in journal %}
+    <li class="pa">
+      <a class="oy {% if log['id'] == _get.jid %}active{% endif %}" href="?p=journal&jid={{log['id']}}">{{log['name']}}</a>
+    </li>
+{% endfor %}
+    <li class="pa">
+      <a class="oy" data-toggle="modal" data-target="#newBookModal" href="#">New Log Book</a>
+    </li>
+  </ul>
+</div>
+</div>
+
+{% if journal|length > 0 or _get.jid != '' %}
+    <div class="dcard-header mb-2 rounded" id="headingTwo">
+      <h6 class="mb-0">
+        <small class="text-info">{{journal_desc['genetics']}} by {{journal_desc['breeder']}}</small>
+        <button class="btn btn-link btn m-0 p-0" type="button" onclick="setCookie('lgdsc');" data-toggle="collapse" data-target="#lg-dsc" aria-expanded="false" aria-controls="">
+          <i id="dsc_btn" class="fas fa-question-circle"></i>
+        </button>
+      </h6>
+    </div>
+
+
+
+<div id="lg-dsc" class="collapse" aria-labelledby="headingTwo">
+<div class="container mb-2">
+     <div class="row">
+          <div class="dcard bg-transparent col-lg-3 col-sm-4 col-6 p-2">
+           <div class="dcard-header p-0 m-1 bg-transparent text-warning border-light h6">Breeder : Strain</div>
+           <div class="dcard-body p-0 m-1"><label class="badge badge-success badge-pill">{{journal_desc['breeder']}}</label>&nbsp;:&nbsp;<label class="badge badge-success badge-pill">{{journal_desc['genetics']}}</label></div>
+          </div>
+          <div class="dcard bg-transparent col-lg-3 col-sm-4 col-6 p-2">
+           <div class="dcard-header p-0 m-1 bg-transparent text-warning border-light h6">Method : Media</div>
+           <div class="dcard-body p-0 m-1"><label class="badge badge-success badge-pill">{{journal_desc['method']}}</label>&nbsp;:&nbsp;<label class="badge badge-success badge-pill">{{journal_desc['media']}}</label></div>
+          </div>
+          <div class="dcard bg-transparent col-lg-3 col-sm-4 col-6 p-2">
+           <div class="dcard-header p-0 m-1 bg-transparent text-warning border-light h6">Nutrients</div>
+           <div class="dcard-body p-0 m-1"><label class="badge badge-success badge-pill">{{journal_desc['nutrients']}}</label></div>
+          </div>
+          <div class="dcard bg-transparent col-lg-3 col-sm-4 col-6 p-2">
+           <div class="dcard-header p-0 m-1 bg-transparent text-warning border-light h6">Lighting</div>
+           <div class="dcard-body p-0 m-1"><label class="badge badge-success badge-pill">{{journal_desc['lighting']}}</label></div>
+          </div>
+          
+          <div class="dcard bg-transparent col-lg-12 col-sm-8 col-12 p-2">
+           <div class="dcard-header p-0 m-1 bg-transparent text-warning border-light h6">Description</div>
+           <div class="dcard-body p-0 m-1"><label class="">{{journal_desc['note']}}</label></div>
+          </div>
+       </div>
+
+</div>      
+</div>
+<form method="post" id="log_form" action=""> 
+  <input style="display:none;" name="clr_date" id="clr_date" value="">
+  <div class="row">
+   <div class="col-12 col-sm-12 col-md-2 col-lg-1 col-xl-1 text-center">
+    {% for type in etype %}
+    {% if type['type_id'] == '20' %}
+    <span>
+    <button type="button"  data-toggle="modal" data-target="#newNoteModal" name="{{type['element']}}" class="btn btn-success btn-sm mb-2 d-none d-sm-none d-md-block" style="width:70px;">{{type['name']}}<br/><i class="{{type['icon']}}"></i></button>
+    <button type="button"  data-toggle="modal" data-target="#newNoteModal" name="{{type['element']}}" class="btn btn-success btn-sm mb-2 d-md-none d-lg-none d-xl-none">{{type['name']}}<br/><i class="{{type['icon']}}"></i></button>
+    </span>
+    {% elseif type['type_id'] == '25' %}
+    <span>
+    <button type="button"  data-toggle="modal" data-target="#newPhotoModal" name="{{type['element']}}" class="btn btn-success btn-sm mb-2 d-none d-sm-none d-md-block" style="width:70px;">{{type['name']}}<br/><i class="{{type['icon']}}"></i></button>
+    <button type="button"  data-toggle="modal" data-target="#newPhotoModal" name="{{type['element']}}" class="btn btn-success btn-sm mb-2 d-md-none d-lg-none d-xl-none">{{type['name']}}<br/><i class="{{type['icon']}}"></i></button>
+    </span>
+    {% else %}
+    <span>
+    <button type="submit" name="{{type['element']}}" class="btn btn-success btn-sm mb-2 d-none d-sm-none d-md-block" style="width:70px;" >{{type['name']}}<br/><i class="{{type['icon']}}"></i></button>
+    <button type="submit" name="{{type['element']}}" class="btn btn-success btn-sm mb-2 d-md-none d-lg-none d-xl-none" >{{type['name']}}<br/><i class="{{type['icon']}}"></i></button>
+    </span>
+    {% endif %}
+    {% endfor %}
+    </div>
+   <div class="col-12 col-sm-12 col-md-10 col-lg-11 col-xl-11">
+            <div class="border border-light rounded p-2 mb-2">
+              <h5 class="bph text-warning">
+                Today
+              </h5>
+              <span class="bpi">{{todays_date|date('m-d-Y')}}</span>
+                 <a href="#" onclick="setClear('{{todays_date|date('m-d-Y')}}');$(this).closest('form').submit();">
+                 <small class="bpk text-success">Clear</small></a>
+                 <hr class="aee pb-0">
+                 <div class="container ml-0 pl-0">
+                 {% for e in journal_events[todays_date] %}
+                    <div class="justify-content-start">
+                    <span style="width:20px;" class="{{ etype[e['event_type']]['icon']}}"></span>
+                    <span class="bpi">{{e['event_date']|date('g:i A')}}</span>
+                    <span>{{ etype[e['event_type']]['full_name']}}</span>
+                    <span class="text-primary float-right">({{ e['event_user']}})</span>
+                    {% if e['event_note'] != '' %}
+                       <br />
+                    {% endif %}
+                    <span class="pl-5 text-success">{{ e['event_note']}}</span>
+                    {% if e['event_image'] != '' %}
+                    <br/>
+                    <img style="width:100px;border-radius:4px;" class="ml-5 magnify" src="{{e['event_image']}}"/>
+                    {%endif%}
+                    <br/>
+                    </div>
+                 {% endfor %}
+                 </div>
+            </div>
+            
+            {% for key, event in journal_events %}
+            {% if key == todays_date%}
+            {% else %}
+            
+            {% set difference = date(key).diff(date()) %}
+            {% set leftDays = difference.days %}
+            
+            
+            <div class="border border-light rounded p-3  mb-2">
+              <h5 class="bph text-warning">
+                {{key|date('m-d-Y')}}
+              </h5>
+              <span class="bpi">Entry - {{ leftDays }} {% if leftDays == 1 %}day{% else %}days{%endif%} ago</span>
+                 <a href="#" onclick="setClear('{{key|date('m-d-Y')}}');$(this).closest('form').submit();"><small class="bpk text-success">Clear</small></a>
+                 <hr class="aee pb-0">
+                 {% for e in event %}
+                    <span style="width:20px;" class="{{ etype[e['event_type']]['icon']}}"></span>
+                    <span class="bpi">{{e['event_date']|date('g:i A')}}</span>
+                    <span>{{ etype[e['event_type']]['full_name']}}</span>
+                    <span class="text-primary float-right">({{ e['event_user']}})</span>
+                    {% if e['event_note'] != '' %}
+                       <br />
+                    {% endif %}
+                    <span class="ml-5 text-success">{{ e['event_note']}}</span>
+                    {% if e['event_image'] != '' %}
+                    <br/>
+                    <img style="width:100px;border-radius:4px;" class="ml-5 magnify" src="{{e['event_image']}}"/>
+                    {%endif%}
+                    <br/>
+                 {% endfor %}
+            </div>
+            {% endif %}
+            {% endfor %}
+            <a href="?p=calendar&jid={{_get.jid}}"><button type="button" name="" class="btn btn-info btn-sm">Calendar<br/><i class="h3 fas fa-calendar-alt"></i></button><a>
+            <button type="submit" name="archive_logbook" class="btn btn-primary float-right btn-sm">Archive Book<br/><i style="font-size:30px;" class="p-2 fas fa-archive"></i></button>            
+            <a href="?p=archive"><button type="button" name="view_archives" class="btn btn-warning btn-sm">View Archives<br/><i style="font-size:30px;" class="p-2 fas fa-archive"></i></button></a>
+
+   </div>
+  </div>
+ </form>
+
+
+{%else%}
+<span class="h3 bpi">No Current Log Books</span><br/>
+<a href="?p=archive"><button type="button" name="view_archives" class="btn btn-warning btn-sm">View Archives<br/><i style="font-size:30px;" class="p-2 fas fa-archive"></i></button></a>
+{% endif %}
+
+
+
+
+<!-- Modal -->
+<div class="modal fade" id="newBookModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
+  <form method="post" action="">
+  <div class="modal-dialog" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="newBookModalLabel">Create Log Book</h5>
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body text-light">
+
+               <div class="input-group mb-1">
+                 <div class="input-group-prepend">
+                   <span style="width:100px;" class="input-group-text">Book Name</span>
+                 </div>
+                 <input name="book_name" type="text" class="form-control" aria-label="" value="" id="book_name">
+               </div>
+               
+               <div class="input-group mb-1">
+                 <div class="input-group-prepend">
+                   <span style="width:100px;" class="input-group-text">Breeder</span>
+                 </div>
+                 <input name="book_breed" type="text" class="form-control" aria-label="" value="" id="book_breed">
+               </div>
+               
+               <div class="input-group mb-1">
+                 <div class="input-group-prepend">
+                   <span style="width:100px;" class="input-group-text">Genetics</span>
+                 </div>
+                 <input name="book_gene" type="text" class="form-control" aria-label="" value="" id="book_gene">
+               </div>
+
+               <div class="input-group mb-1">
+                 <div class="input-group-prepend">
+                   <span style="width:100px;" class="input-group-text">Nutrients</span>
+                 </div>
+                 <input name="book_nutes" type="text" class="form-control" aria-label="" value="" id="book_nutes">
+               </div>
+
+               <div class="input-group mb-1">
+                 <div class="input-group-prepend">
+                   <span style="width:100px;" class="input-group-text">Method</span>
+                 </div>
+                 <input name="book_method" type="text" class="form-control" aria-label="" value="" id="book_method">
+               </div>
+
+               <div class="input-group mb-1">
+                 <div class="input-group-prepend">
+                   <span style="width:100px;" class="input-group-text">Media</span>
+                 </div>
+                 <input name="book_media" type="text" class="form-control" aria-label="" value="" id="book_media">
+               </div>
+               
+
+               <div class="input-group mb-1">
+                 <div class="input-group-prepend">
+                   <span style="width:100px;" class="input-group-text">Lighting</span>
+                 </div>
+                 <input name="book_light" type="text" class="form-control" aria-label="" value="" id="book_light">
+               </div>
+
+
+               <div class="input-group mb-1">
+                 <div class="input-group-prepend">
+                   <span style="width:100px;" class="input-group-text">Description</span>
+                 </div>
+                 <textarea name="book_note" type="text" class="form-control" aria-label="" value="" rows="3" maxlength="250" id="book_note"></textarea>
+               </div>
+      </div>
+      <div class="model-footer">
+
+          <button type="button" class="nz aye" data-dismiss="modal">Cancel</button>
+          <button type="submit" name="new_journal" class="nz aye">
+            <strong>Create</strong>
+          </button>
+      </div>
+    </div>
+  </div>
+  </form>
+</div>
+
+
+<!-- Modal -->
+<div class="modal fade" id="newNoteModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
+  <form method="post" action="" enctype="multipart/form-data">
+  <div class="modal-dialog" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="newNoteModalLabel">Create Log Note</h5>
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body text-light">
+               <div class="input-group mb-1">
+                 <div class="input-group-prepend">
+                   <span style="width:90px;" class="input-group-text">Note</span>
+                 </div>
+                 <textarea name="event_note" type="text" class="form-control" aria-label="" value="" rows="5" maxlength="250" id="event_note"></textarea>
+               </div>
+      </div>
+
+
+
+      <div class="model-footer">
+
+          <button type="button" class="nz aye" data-dismiss="modal">Cancel</button>
+          <button type="submit" name="new_event_note" class="nz aye">
+            <strong>Create</strong>
+          </button>
+      </div>
+    </div>
+  </div>
+  </form>
+</div>
+
+
+<!-- Modal -->
+<div class="modal fade" id="newPhotoModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
+<form action="index.php" enctype="multipart/form-data" method="POST">
+  <div class="modal-dialog" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="newPhotoModalLabel">Upload Photo</h5>
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body text-light">
+
+
+    <div class="dropzone" id="myDropzone"></div>
+     
+
+     </div>
+      <div class="model-footer">
+
+          <button type="button" class="nz aye" data-dismiss="modal">Cancel</button>
+          <button type="button" name="submit-all" id="submit-all" name="new_photo_note" class="nz aye">
+            <strong>Upload</strong>
+          </button>
+      </div>
+    </div>
+  </div>
+ </form>
+</div>
+
+
+
+<div class="modal fade" id="imagemodal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content">              
+      <div class="modal-body">
+      	<button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">&times;</span><span class="sr-only">Close</span></button>
+        <img src="" class="imagepreview" style="width: 100%;border-radius:5px;">
+      </div>
+    </div>
+  </div>
+</div>
+
+
+
+
+
+
+{% endblock %} 

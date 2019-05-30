@@ -1,0 +1,546 @@
+{% extends 'base.html' %}
+
+{% block head %}
+{{ parent() }}
+<script>
+
+function sendState(id, gpio, state)
+{
+
+if(state)
+  func = 'ON';
+else
+  func = 'OFF';
+message = new Paho.MQTT.Message(func);
+message.qos = 2;
+message.retained = false;
+message.destinationName = "cmnd/webgrow/device/"+id+"/POWER";
+client.send(message);
+
+}
+
+function sendRun(id, trigger, state)
+{
+     if ($('#stateSwitch'+id).is(':checked'))
+        $('#stateSwitch'+id).trigger('click');
+
+if(state)
+  func = 'ON';
+else
+  func = 'OFF';
+message = new Paho.MQTT.Message(func);
+message.destinationName = "cmnd/webgrow/device/"+id+"/RUN";
+client.send(message);
+}
+
+
+function toggleTrigger(trigger) {
+     if(trigger != 0)
+        $('#collapse0').collapse('hide');
+     if(trigger != 10)
+        $('#collapse10').collapse('hide');
+     if(trigger != 15)
+        $('#collapse15').collapse('hide');
+     if(trigger != 20)
+        $('#collapse20').collapse('hide');
+     if(trigger != 25)
+        $('#collapse25').collapse('hide');
+     if(trigger != 30)
+        $('#collapse30').collapse('hide');
+     $('#collapse'+trigger).collapse('show');
+
+}
+
+function toggleProtocol(protocol) {
+     if(protocol == 0){
+        $('#collapse_gpio').collapse('show');
+        $('#collapse_ip').collapse('hide');}
+     else  {
+        $('#collapse_gpio').collapse('hide');
+        $('#collapse_ip').collapse('show');
+     }
+}
+
+function setDelete(id) {
+ $("#del_id").val(id);
+}
+
+function setInfo(protocol, id, topic, gpio, last_run) {
+ runHtml =  '<div class="p-2 text-success" >'+
+               '<span>'+last_run+'</span><br/>'+
+            '</div>';
+
+ $("#info_last_run").html(runHtml);
+ if(protocol == 0)
+ {
+ topic1 = "cmnd/webgrow/device/"+id+"/POWER ON";
+ topic2 = "cmnd/webgrow/device/"+id+"/POWER OFF";
+ topic3 = "cmnd/webgrow/gpio/"+gpio+"/POWER ON";
+ topic4 = "cmnd/webgrow/gpio/"+gpio+"/POWER OFF";
+ topic_html = '<div class="p-2 text-success" >'+
+               '<span class="bpi">Turning ON:</span><br/>'+
+               '<span>'+topic1+'</span><br/>'+
+               '<span>'+topic3+'</span>'+
+            '</div>'+
+            '<div class="p-2 text-danger">'+
+            '<span class="bpi">Turning OFF:</span><br/>'+
+               '<span>'+topic2+'</span><br/>'+
+               '<span>'+topic4+'</span>'+
+            '</div>';
+
+  $("#mqtt_topics").html(topic_html);
+  
+ }
+ else if(protocol == 20)
+ {
+ topic1 = "cmnd/webgrow/device/"+id+"/POWER ON";
+ topic2 = "cmnd/webgrow/device/"+id+"/POWER OFF";
+ topic3 = "cmnd/"+topic+"/POWER ON";
+ topic4 = "cmnd/"+topic+"/POWER OFF";
+ topic_html = '<div class="p-2 text-success" >'+
+               '<span class="bpi">Turning ON:</span><br/>'+
+               '<span>'+topic1+'</span><br/>'+
+               '<span>'+topic3+'</span>'+
+            '</div>'+
+            '<div class="p-2 text-danger">'+
+            '<span class="bpi">Turning OFF:</span><br/>'+
+               '<span>'+topic2+'</span><br/>'+
+               '<span>'+topic4+'</span>'+
+            '</div>';
+
+  $("#mqtt_topics").html(topic_html);
+ }
+}
+
+
+function setCreate(){
+setEdit('','','','','','','','','','','','','','');
+$("#editModalLabel").html('Create Device');
+}
+function setEdit(id, trigger, gpio, name, iv, dr, temp, tch, hmd, hch, type, proto, ip, timer) {
+ $("#editModalLabel").html('Edit Device');
+ $("#edit_name").val(name);
+ $("#gpio_select").val(gpio);
+ $("#protocol_select").val(proto);
+ $("#edit_ip").val(ip);
+ $("#trigger_select").val(trigger);
+ $("#edit_id").val(id);
+ $("#sel_interval").val(iv);
+ $("#sel_duration").val(dr);
+ $("#sel_temp").val(temp);
+ $("#sel_humid").val(hmd);
+ $("#t_select").val(tch);
+ $("#h_select").val(hch);
+ $("#type_select").val(type);
+ $("#edit_timer").val(timer);
+}
+
+$("[data-toggle=popover]").popover();
+</script>
+
+{% endblock %}
+
+{% block content %}
+
+{% set disable_run = '' %}
+
+{%if not settings['e_sensor']%}
+     {% set disable_run = 'disabled' %}
+{%endif%}
+
+{% if python_status[2] != '' %}
+{% else %}
+    <span id="python_status">
+    </span>
+{% endif %}
+
+
+
+
+
+<form method="post" action="/dashboard/">
+<div class="row">
+
+{% for device in devices %}
+<div class="col-lg-4 col-md-6 col-sm-12">
+<div class="dcard mb-3 text-center">
+   <!--  <div class="" style="position:absolute;top:0;right:0;font-size:18px;"><a href="#" class="text-white"><i style="border-radius:50%;width:35px;height:35px;background-color:#222;" class="fas fa-ellipsis-v pt-2 m-2"></i></a></div> --!>
+     <div class="dcard-header">
+         <i style="padding:25px;font-size:50px;border-radius:50%;width:100px;height:100px;" class="{{ device_types[device['d_type']]['d_icon']  }} bg-light"></i>
+         <h6 class="text-dark mt-1 mb-0">{{ device_types[device['d_type']]['d_genericname']  }}</h6>
+         <h4 class="dcard-title text-warning mt-0">{{ device['d_name'] }}</h4>
+     </div>
+     
+     <div class="dcard-body p-1">
+     
+     
+     <div class="row p-0 m-0">
+          <div class="dcard bg-white col-6 p-2">
+           <div class="dcard-header bg-white text-light p-0 h6 mt-2">{{protocols[device['d_protocol']]['d_genericname']}}</div>
+           <div class="dcard-body p-0"><label class="badge badge-primary badge-pill">{%if device['d_protocol'] == 0%}{{ device['d_gpio'] }}{%else%}{{ device['d_ip'] }}{%endif%}</label></div>
+          </div>
+          <div class="dcard bg-white col-6 p-2">
+           <div class="dcard-header bg-white text-light p-0 h6 mt-2">Trigger{{disable_run}}</div>
+           <div class="dcard-body p-0"><label class="badge badge-primary badge-pill">{% if disable_run == 'disabled' and (device['d_trigger'] == 20 or device['d_trigger'] == 25)  %}Disabled{%else%}{{ trigger_types[device['d_trigger']]['t_name'] }}{%endif%}</label></div>
+          </div>
+          
+          <div class="dcard bg-white col-3 p-2">
+           <div class="dcard-header bg-white text-light p-0 h6 mt-2">State</div>
+           <div class="dcard-body p-0">
+                  <div class="custom-control custom-switch">
+                  <input {% if device['d_state'] %} checked {%endif%} type="checkbox" onChange="sendState('{{device['id']}}', '{{device['d_gpio']}}', $(this).is(':checked'));" class="custom-control-input" id="stateSwitch{{device['id']}}">
+                  <label class="custom-control-label" for="stateSwitch{{device['id']}}"></label>
+                  </div>
+           
+           </div>
+          </div>
+
+
+          <div class="dcard bg-white col-3 p-2">
+           <div class="dcard-header bg-white text-light p-0 h6 mt-2">Run</div>
+           <div class="dcard-body p-0">
+           
+                  <div class="custom-control custom-switch">
+                  <input {% if device['d_run'] %} checked {%endif%} {% if device['d_trigger'] == 0 %} disabled{%endif%} {% if device['d_trigger'] == 20 or device['d_trigger'] == 25%} {{disable_run}} {%endif%}type="checkbox" onChange="sendRun('{{device['id']}}', '{{device['d_trigger']}}', $(this).is(':checked'));" class="custom-control-input js-switch" id="runSwitch{{device['id']}}">
+                  <label class="custom-control-label" for="runSwitch{{device['id']}}"></label>
+                  </div>
+           
+           </div>
+          </div>
+          
+          {% if device['d_trigger'] == 0%}          
+          <div class="dcard bg-white col-6 p-2">
+           <div class="dcard-body p-0"><label class="h3 text-primary"></label></div>
+          </div>
+          {% endif %}
+          
+          {% if device['d_trigger'] == 10%}          
+          <div class="dcard bg-white col-3 p-2">
+           <div class="dcard-header bg-white text-light p-0 h6 mt-2"><i class="fas fa-stopwatch"></i></div>
+           <div class="dcard-body p-0"><label class="text-light h6">{{ device['d_interval']  }}</label><label style="font-size:10px;" class="text-primary">s</label></div>
+          </div>
+          <div class="dcard bg-white col-3 p-2">
+           <div class="dcard-header bg-white text-light p-0 h6 mt-2"><i class="far fa-stop-circle"></i></div>
+           <div class="dcard-body p-0"><label class="h6 text-light">{{ device['d_duration']  }}</label><label style="font-size:10px;" class="text-primary">s</label></div>
+          </div>
+          {% endif %}
+          
+          {% if device['d_trigger'] == 15%}          
+          <div class="dcard bg-white col-6 p-2">
+           <div class="dcard-header bg-white text-light p-0 h6 mt-2"><i class="fas fa-stopwatch"></i></div>
+           <div class="dcard-body p-0"><label class="text-light h6">{{ device['d_timer']  }}</label><label style="font-size:10px;" class="text-primary">s</label></div>
+          </div>
+          {% endif %}
+          
+          
+          {% if device['d_trigger'] == 20%}
+            {% if device['d_tchange'] == 1%}
+               {%set c_icon = 'fas fa-arrow-alt-circle-up' %} 
+            {% else %}
+               {%set c_icon = 'fas fa-arrow-alt-circle-down' %}
+            {% endif %}          
+          <div class="dcard bg-white col-6 p-2">
+           <div class="dcard-header bg-white text-light p-0 h6 mt-2">Level</div>
+           <div class="dcard-body p-0"><label class="h6 text-light"><i class="{{ c_icon  }}"></i>{{ device['d_temp']  }}</label></div>
+          </div>
+          {% endif %}
+          
+          {% if device['d_trigger'] == 25%}
+             {% if device['d_hchange'] == 1%}
+               {%set c_icon = 'fas fa-arrow-alt-circle-up' %} 
+            {% else %}
+               {%set c_icon = 'fas fa-arrow-alt-circle-down' %}
+            {% endif %}          
+          <div class="dcard bg-white col-6 p-2">
+           <div class="dcard-header bg-white text-light p-0 h6 mt-2">Level</div>
+           <div class="dcard-body p-0"><label class="h6 text-light"><i class="{{ c_icon }}"></i>{{ device['d_humid']  }}</label></div>
+          </div>
+          {% endif %}
+          
+          {% if device['d_trigger'] == 30%}          
+          <div class="dcard bg-white col-6 p-2">
+           <div class="dcard-body p-0"><label class="h3 text-primary"><a href="?p=schedule&d={{device['id']}}"><i class="mt-2 fas fa-clock"></i></a></label></div>
+          </div>
+          {% endif %}
+          
+          <div class="dcard bg-white col-12 p-2">
+           <div class="dcard-body p-0 d-flex justify-content-between align-items-center">
+               <button class="btn btn-primary p-0" onclick="toggleProtocol({{device['d_protocol']}});toggleTrigger({{device['d_trigger']}});setEdit({{ device['id'] }}, {{device['d_trigger']}}, {{device['d_gpio']}}, '{{device['d_name']}}', {{device['d_interval']}}, {{device['d_duration']}}, {{device['d_temp']}}, '{{device['d_tchange']}}', {{device['d_humid']}}, '{{device['d_hchange']}}', {{device['d_type']}}, '{{device['d_protocol']}}', '{{device['d_ip']}}', '{{device['d_timer']}}')" data-toggle="modal" data-target="#editModal" type="button" style="border-radius:30%;width:35px;height:35px;"><i style="font-size:20px;" class="mt-1 fas fa-pen-square"></i></button>  
+               <div>
+               <button class="btn btn-info p-0" type="button"  onclick="setInfo({{ device['d_protocol'] }},{{ device['id'] }},'{{ device['d_ip'] }}',{{ device['d_gpio'] }}, '{{ device['d_lastrun']|date('m/d/y g:i A') }}')" data-toggle="modal" data-target="#infoModal" style="border-radius:30%;width:35px;height:35px;"><i style="font-size:20px;" class="mt-1 fas fa-info-circle"></i></button>
+               <button class="btn btn-secondary p-0" onclick="setDelete({{ device['id'] }})"  data-toggle="modal" data-target="#deleteModal" type="button" style="border-radius:30%;width:35px;height:35px;"><i style="font-size:20px;" class="mt-1 fas fa-trash"></i></button>  
+               </div>
+           </div>
+          </div>
+          
+
+     </div>   
+     
+     
+     </div>
+     
+</div>
+</div>
+{% endfor %} 
+<div class="col-lg-4 col-md-6 col-sm-12">
+            <div class="dcard-header p-4 text-center" style="height:90px;border-radius:4px;border:1px solid #535867">
+            <a href="#" data-toggle="modal" data-target="#editModal" onclick="toggleProtocol(0);toggleTrigger(0);setCreate();"><i style="font-size:40px;" class="fas fa-plus-circle pl-2"></i></a>
+            </div>
+
+</div>
+</div>
+</form>
+
+<!-- Modal -->
+<div class="modal fade" id="deleteModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
+  <div class="modal-dialog" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="exampleModalLabel">Delete Device</h5>
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body text-light">
+        Are you sure you wish to delete this device?
+      </div>
+      <div class="model-footer">
+          <form method="post" action="">
+          <input name="del_id" id="del_id" style="display:none">
+          <button type="button" class="nz aye" data-dismiss="modal">Cancel</button>
+          <button type="submit" name="delete_device" class="nz aye">
+            <strong>Delete</strong>
+          </button>
+          </form>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+<!-- Modal -->
+
+
+<div class="modal fade" id="infoModal" tabindex="-2" role="dialog" aria-labelledby="infoModalLabel" aria-hidden="true">
+
+  <div class="modal-dialog">
+    <div class="modal-content">              
+      <div class="modal-header">
+        <h5 class="modal-title" id="infoModalLabel">Device Information</h5>
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+
+      <div class="modal-body">
+        <span class="text-light"><strong>MQTT Control Topics:</strong></span>
+        <div name="mqtt_topics" id="mqtt_topics"></div>        
+        <span class="text-light"><strong>Last Run Time:</strong></span>
+        <div name="info_last_run" id="info_last_run"></div>
+      </div>
+    </div>
+   </div>
+</div>
+
+
+
+
+
+<!-- Modal -->
+<form method="post" action="">
+<div class="modal fade" id="editModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
+  <div class="modal-dialog" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="editModalLabel">Edit Device</h5>
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body text-light">
+                <div class="input-group mb-1">
+                 <div class="input-group-prepend">
+                   <span style="width:80px;" class="input-group-text">Name</span>
+                 </div>
+                 <input name="sel_name" type="text" class="form-control" aria-label="" value="" id="edit_name">
+               </div>
+                 
+                  <div class="input-group mb-1">
+                   <div class="input-group-prepend bg-dark">
+                     <label style="width:80px;" class="input-group-text" for="inputGroupSelectP">Protocol</label>
+                   </div>
+                   <select name="sel_protocol" selected="" class="form-control custom-select" id="protocol_select" onchange="toggleProtocol(this.value);">
+                     {% for proto in protocols %}
+                         <option value="{{ proto['d_protocol'] }}">{{ proto['d_genericname'] }}</option>
+                     {% endfor %}
+                   </select>
+                 </div>
+                 
+                  <div class="input-group mb-1">
+                   <div class="input-group-prepend bg-dark">
+                     <label style="width:80px;" class="input-group-text" for="inputGroupSelect01">Type</label>
+                   </div>
+                   <select name="sel_type" selected="" class="form-control custom-select" id="type_select">
+                     {% for type in device_types %}
+                         <option value="{{ type['d_type'] }}">{{ type['d_genericname'] }}</option>
+                     {% endfor %}
+                   </select>
+                 </div>
+                 
+                <div class="collapse" id="collapse_ip">
+                <div class="input-group mb-1">
+                 <div class="input-group-prepend">
+                   <span style="width:80px;" class="input-group-text">Topic</span>
+                 </div>
+                 <input name="sel_ip" type="text" class="form-control" aria-label="" value="" id="edit_ip">
+                </div>
+                </div>
+                
+                 <div class="collapse" id="collapse_gpio">
+                 <div class="input-group mb-1">
+                   <div class="input-group-prepend">
+                     <label style="width:80px;" class="input-group-text" for="inputGroupSelect01">GPIO</label>
+                   </div>
+                   <select name="sel_gpio_pin" selected="0" class="form-control custom-select" id="gpio_select">
+                     {% for pin in gpio_pins %}
+                         <option value="{{ pin['gpio'] }}">{{ pin['gpio'] }}</option>
+                     {% endfor %}
+                   </select>
+                 </div>
+                 </div>
+                 
+                 <div class="input-group mb-1">
+                   <div class="input-group-prepend">
+                     <label style="width:80px;" class="input-group-text" for="inputGroupSelect01">Trigger</label>
+                   </div>
+                   <select name="sel_trigger" class="form-control custom-select" id="trigger_select" onchange="toggleTrigger(this.value);">
+                     {% for tg in triggers %}
+                        {% if tg['t_enabled'] %}
+                          <option value="{{ tg['t_id'] }}">{{ tg['t_name'] }}</option>
+                          
+                        {% else %}
+                           {% set disable_run = 'disabled' %}
+                           <option disabled selected value="{{ tg['t_id'] }}">Disabled</option>
+                        {% endif %}
+                     {% endfor %}  
+                   </select>
+                 </div>
+                 
+                <div class="collapse" id="collapse15">
+                <div class="input-group mb-1">
+                 <div class="input-group-prepend">
+                   <span style="width:80px;" class="input-group-text">Timer</span>
+                 </div>
+                 <input name="sel_timer" type="text" class="form-control" aria-label="" value="" id="edit_timer">
+                </div>
+                </div>
+                 
+                 <div class="collapse" id="collapse20">
+                 <div class="input-group mb-1">
+                   <div class="inpu-group-prepend">
+                     <div style="width:80px;" class="input-group-text">Change</div>
+                   </div>
+                   <select name="sel_change" class="form-control custom-select" id="t_select" onchange="">
+                          <option value="0">Less Than</option>
+                          <option value="1">Greater Than</option>
+                   </select>
+                   </div>
+                 <div class="input-group mb-1">
+                   <div class="input-group-prepend">
+                     <div style="width:80px;" class="input-group-text" id="run_interval">Temp</div>
+                   </div>
+                   <input type="text" id="sel_temp" name="sel_temp" class="form-control" value="" 
+                   placeholder="" aria-label="run_interval" aria-describedby="run_interval">
+                 </div>
+                 </div>
+                 
+                 <div class="collapse" id="collapse25">
+                 <div class="input-group mb-1">
+                   <div class="inpu-group-prepend">
+                     <div style="width:80px;" class="input-group-text">Change</div>
+                   </div>
+                   <select name="sel_hchange" class="form-control custom-select" id="h_select" onchange="">
+                          <option value="0">Less Than</option>
+                          <option value="1">Greater Than</option>
+                   </select>
+                   </div>
+                 <div class="input-group mb-1">
+                   <div class="input-group-prepend">
+                     <div style="width:80px;" class="input-group-text" id="run_interval">Humidity</div>
+                   </div>
+                   <input type="text" id="sel_humid" name="sel_humid" class="form-control" value="" 
+                   placeholder="" aria-label="run_humid" aria-describedby="run_humid">
+                 </div>
+                   
+                 </div>
+
+                 <div class="collapse" id="collapse10">
+                 <div class="input-group mb-1">
+                   <div class="input-group-prepend">
+                     <div style="width:80px;" class="input-group-text" id="run_interval">Interval</div>
+                   </div>
+                   <input id="sel_interval" type="text" name="sel_interval" class="form-control" value="" placeholder="" aria-label="run_interval" aria-describedby="run_interval">
+                 </div>
+                 <div class="input-group mb-1">
+                   <div class="input-group-prepend">
+                     <div style="width:80px;" class="input-group-text" id="run_duration">Duration</div>
+                   </div>
+                   <input id="sel_duration" type="text" name="sel_duration" class="form-control" value="" placeholder="" aria-label="run_duration" aria-describedby="run_duration">
+                 </div>
+                 </div>
+
+      </div>
+      <div class="model-footer">
+          <input name="edit_id" id="edit_id" style="display:none">
+          <button type="button" class="nz aye" data-dismiss="modal">Cancel</button>
+          <button type="submit" name="save_device" class="nz aye">
+            <strong>Save</strong>
+          </button>
+      </div>
+    </div>
+  </div>
+</div>
+</form>
+
+
+
+
+
+
+
+
+
+
+
+
+
+                 
+                 
+                 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+{% endblock %} 

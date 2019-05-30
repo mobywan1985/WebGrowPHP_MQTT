@@ -1,0 +1,200 @@
+{% extends 'base.html' %}
+
+{% block head %}
+{{ parent() }}
+
+<link href="templates/static/css/bootstrap-clockpicker.css" rel="stylesheet">
+<script src="templates/static/js/bootstrap-clockpicker.js"></script>
+<link href="templates/static/css/wickedpicker.min.css" rel="stylesheet">
+<script src="templates/static/js/wickedpicker.min.js"></script>
+
+<script>
+var flag = 0;
+
+
+function toggleClockRunType(id){
+     var src = $('#seqType'+id).val()
+     if (src == "1")
+       {
+       $('#timeImg'+id).attr('src', imgOff);
+       $('#seqType'+id).val("0");
+       }
+     else
+       {
+       $('#timeImg'+id).attr('src', imgOn);
+       $('#seqType'+id).val("1");
+       }
+}
+function toggleTrigger(trigger) {
+     $('#collapse_1').collapse('hide');
+     $('#collapse_2').collapse('hide');
+     $('#collapse_3').collapse('hide');
+     if (trigger == '3') 
+       $('#custom_trigger_command').html('<div class="input-group mb-1"><button type=button onclick="addTimeSequence()" class="btn btn-primary">+</button></div>');
+     else
+       $('#custom_trigger_command').html('');   
+     $('#collapse_'+trigger).collapse('show');
+}
+
+function removeTimeSequence(id){
+    $('#time'+id).html('');
+    $('#time'+id).collapse('hide');
+}
+
+function getHTML(time, sw, cron='*', wk_html=''){
+    html =   `<li class="list-group-item rs pb-2 collapse show" id="time${flag}">`+
+             '<span><div class="custom-control custom-switch float-left">'+
+             `<input ${sw} type="checkbox" class="custom-control-input js-switch" name="sw${flag}" id="switch${flag}">`+
+              `<label class="custom-control-label" for="switch${flag}"></label>`+
+              `</div>${time}<input style="display:none" name="seqAdd${flag}" value="${time}">${wk_html}<input style="display:none" name="seqWhen${flag}" value="${cron}"></span>`+
+              `<span class="brk awy"><button type="button" onclick="removeTimeSequence(${flag})" class="btn m-0 p-0 text-warning float-right" >`+
+              '<i class="fas fa-ban"></i></button></span></li>';
+    return html;
+}
+function addTimeSequence() {
+    var time = $('#timepicker').val();
+    var sun = $('#sunCheck').prop('checked');
+    var mon = $('#monCheck').prop('checked');
+    var tue = $('#tueCheck').prop('checked')
+    var wed = $('#wedCheck').prop('checked')
+    var thu = $('#thuCheck').prop('checked')
+    var fri = $('#friCheck').prop('checked')
+    var sat = $('#satCheck').prop('checked')
+    var wk_html = '<span class="pl-3">';
+    if(sun){var sun_s = 'sun,';wk_html +='<small class="text-success">S </small>';}else {sun_s='';wk_html +='<small class="text-secondary">S </small>';}
+    if(mon){var mon_s = 'mon,';wk_html +='<small class="text-success">M </small>';}else {mon_s='';wk_html +='<small class="text-secondary">M </small>';}
+    if(tue){var tue_s = 'tue,';wk_html +='<small class="text-success">T </small>';}else {tue_s='';wk_html +='<small class="text-secondary">T </small>';}
+    if(wed){var wed_s = 'wed,';wk_html +='<small class="text-success">W </small>';}else {wed_s='';wk_html +='<small class="text-secondary">W </small>';}
+    if(thu){var thu_s = 'thu,';wk_html +='<small class="text-success">T </small>';}else {thu_s='';wk_html +='<small class="text-secondary">T </small>';}
+    if(fri){var fri_s = 'fri,';wk_html +='<small class="text-success">F </small>';}else {fri_s='';wk_html +='<small class="text-secondary">F </small>';}
+    if(sat){var sat_s = 'sat'; wk_html +='<small class="text-success">S</small>'; }else {sat_s='';wk_html +='<small class="text-secondary">S</small>';}
+    wk_html += '</span>';
+
+    var cron = (sun_s+mon_s+tue_s+wed_s+thu_s+fri_s+sat_s);
+    cron = cron.replace(/^\,+|\,+$/g, '');
+    html = getHTML(time, '', cron, wk_html);
+    $('#timeSequence').append(html);
+    flag++;
+}
+function build_wk_html(dow){
+    var days = dow.split(',');
+
+    var wk_html = '<span class="pl-3">';
+    var d = 0;
+
+    if(days[d] == 'sun'){wk_html +='<small class="text-success">S </small>';d++;}else {sun_s='';wk_html +='<small class="text-secondary">S </small>';}
+    if(days[d] == 'mon'){wk_html +='<small class="text-success">M </small>';d++;}else {mon_s='';wk_html +='<small class="text-secondary">M </small>';}
+    if(days[d] == 'tue'){wk_html +='<small class="text-success">T </small>';d++;}else {tue_s='';wk_html +='<small class="text-secondary">T </small>';}
+    if(days[d] == 'wed'){wk_html +='<small class="text-success">W </small>';d++;}else {wed_s='';wk_html +='<small class="text-secondary">W </small>';}
+    if(days[d] == 'thu'){wk_html +='<small class="text-success">T </small>';d++;}else {thu_s='';wk_html +='<small class="text-secondary">T </small>';}
+    if(days[d] == 'fri'){wk_html +='<small class="text-success">F </small>';d++;}else {fri_s='';wk_html +='<small class="text-secondary">F </small>';}
+    if(days[d] == 'sat'){wk_html +='<small class="text-success">S</small>'; }else {sat_s='';wk_html +='<small class="text-secondary">S</small>';}
+    
+    wk_html += '</span>';
+    return wk_html;
+}
+function addExistingTimeSequence(time, sw, dow) {
+    var ck = '';
+    if(sw == '1')
+       ck = 'checked';
+    html=getHTML(time, ck, dow, build_wk_html(dow));
+    $('#timeSequence').append(html);
+    flag++;
+}
+
+
+</script>
+  
+{% endblock %}
+
+
+{% block content %}
+
+
+
+<form method="post" action="/dashboard/?p=devices">
+<div class="row">
+<div class="col-lg-4 col-md-6 col-sm-12 mb-2">
+           <div class="dcard bg-white p-2 pl-3">
+           <div style="display:none"><input name="deviceScheduleID" value="{{ ds_id }}"></div>
+           <div class="row">
+           <div class="col-8">
+             <div class="dcard-header bg-white text-light h6 p-1"><i class="fas fa-clock"></i><label class="pl-2">Add Event</label></div>
+             <div class="p-0"><label class="text-light h6 pt-3"><input type="text" id="timepicker" name="timepicker" class="timepicker form-control"/></div>
+           </div>
+           <div class="col-4">
+             <div class="text-center"><a href="#"><i onclick="addTimeSequence()" class="fas fa-plus-circle text-center pt-3" style="font-size:50px;"></i></a></div>
+           </div>
+           <div class="col-12 d-flex justify-content-center text-light">
+
+
+                    <div class="custom-control custom-checkbox pr-1">
+                    <input type="checkbox" class="custom-control-input" id="sunCheck" checked>
+                    <label class="custom-control-label" for="sunCheck">S</label>
+                    </div>
+                    <div class="custom-control custom-checkbox pr-1">
+                    <input type="checkbox" class="custom-control-input" id="monCheck" checked>
+                    <label class="custom-control-label" for="monCheck">M</label>
+                    </div>
+                    <div class="custom-control custom-checkbox pr-1">
+                    <input type="checkbox" class="custom-control-input" id="tueCheck" checked>
+                    <label class="custom-control-label" for="tueCheck">T</label>
+                    </div>
+                    <div class="custom-control custom-checkbox pr-1">
+                    <input type="checkbox" class="custom-control-input" id="wedCheck" checked>
+                    <label class="custom-control-label" for="wedCheck">W</label>
+                    </div>
+                    <div class="custom-control custom-checkbox pr-1">
+                    <input type="checkbox" class="custom-control-input" id="thuCheck" checked>
+                    <label class="custom-control-label" for="thuCheck">T</label>
+                    </div>
+                    <div class="custom-control custom-checkbox pr-1">
+                    <input type="checkbox" class="custom-control-input" id="friCheck" checked>
+                    <label class="custom-control-label" for="friCheck">F</label>
+                    </div>
+                    <div class="custom-control custom-checkbox">
+                    <input type="checkbox" class="custom-control-input" id="satCheck" checked>
+                    <label class="custom-control-label" for="satCheck">S</label>
+                    </div>
+           </div>
+           </div>
+           <script>
+           var options = { showSeconds: true, secondsInterval: 1 };
+           $('.timepicker').wickedpicker(options);
+           </script>
+           </div>
+           <button type="submit" name="applySchedule" class="btn btn-primary float-right mt-2"><i class="h3 pl-3 pr-3 fas fa-save"></i><br/>Apply</button>
+</div>
+
+<div class="col-lg-8 col-md-6 col-sm-12">
+       <div id="timeSeqDiv">
+       <h6 class="aya text-warning">
+         Device Schedule
+        </h6>
+        
+
+                  
+        <ul class="list-group aya" id="timeSequence">
+       {% for seq in deviceSchedule %}
+            <script type="text/javascript">
+            addExistingTimeSequence('{{ seq["runtime"]|date("g : i : s A") }}', '{{ seq["d_state"] }}', '{{ seq["d_dayofwk"] }}');
+            
+            </script>
+       {% endfor %}
+        </ul>
+       </div>
+</div>
+</div>
+</form>
+
+
+
+
+
+
+
+
+
+
+
+{% endblock %}

@@ -1,0 +1,54 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <!-- The above 3 meta tags *must* come first in the head; any other head content must come *after* these tags -->
+    <meta name="description" content="">
+    <meta name="author" content="">
+
+    <title>WebGrow Sign In</title>
+
+    <!-- Bootstrap core CSS -->
+    <link rel="stylesheet" href="../dashboard/templates/static/fonts/fontawesome/css/all.css">
+    <link href="../dashboard/templates/static/css/bootstrap.css" rel="stylesheet">
+
+
+    <!-- Custom styles for this template -->
+    <link href="../dashboard/templates/static/css/signin.css" rel="stylesheet">
+
+  </head>
+
+  <body class="text-center">
+
+    <div class="container p-3 login-box" style="">
+    
+
+      <form class="form-signin" action="" method="post">
+        <img width="80" src="dashboard/templates/static/img/webgrow_icon.png">
+        <span style="display:block;">
+        <h2 class="form-signin-heading">WebGrow Sign In</h2>
+        {%block error %}
+          {% if error|length > 0 %}
+          <div class="alert alert-danger" role="alert">{{ error[0] }}</div>
+          {% endif %}
+        {% endblock %}
+        <label for="inputEmail" class="sr-only">Username</label>
+        <input name="username" id="username" class="form-control" placeholder="Username" required autofocus>
+        <label for="inputPassword" class="sr-only">Password</label>
+        <input type="password" name="password" id="password" class="form-control" placeholder="Password" required>
+        <div class="text-left checkbox mb-3">
+        <label>
+        <input type="checkbox" name="autologin" value="1"> Remember me
+        </label>
+        </div>
+        <button class="btn btn-lg btn-primary btn-block" name="submit" type="submit">Sign in</button>
+        </span>
+      </form>
+
+    </div> <!-- /container -->
+
+
+  </body>
+</html>

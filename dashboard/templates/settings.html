@@ -1,0 +1,135 @@
+{% extends 'base.html' %}
+
+{% block head %}
+{{ parent() }}
+{% endblock %}
+
+{% block content %}
+
+<form method="post" autocomplete="off" action="">
+<input type="text" style="display:none">
+<input type="password" style="display:none">
+{% if settings['e_webcam'] %}
+  {% set ewbcm = 'checked' %}
+{% endif %}
+
+
+{% if settings['e_sensor'] %}
+  {% set etmp = 'checked' %}
+{% endif %}
+
+{% if settings['s_alert'] %}
+  {% set ealt = 'checked' %}
+{% endif %}
+
+<div class="container p-0">
+<div class="row">
+    <div class="col-lg-3 col-md-12 col-sm-12">
+            <div class="form-control-dark agv aew">
+              <h5 class="bph text-warning">
+                Webcam
+              </h5>
+              <span class="bpi">Device Status:</span>
+              {% if settings['e_webcam'] %}<small class="bpk text-success">Enabled</small>{% else %}<small class="bpk text-danger">Disabled</small>{% endif %}
+                    <div class="custom-control custom-checkbox mb-2">
+                    <input type="checkbox" class="custom-control-input" id="customCheck1" name="enable_webcam" {{ewbcm}} aria-label="Checkbox for following text input">
+                    <label class="custom-control-label" for="customCheck1">Enable Webcam</label>
+                    </div>
+            </div>
+    </div>
+    
+    
+    <div class="col-lg-4 col-md-12 col-sm-12">
+            <div class="form-control-dark agv aew">
+              <h5 class="bph text-warning">
+                DHT22 Sensor
+              </h5>
+              <span class="bpi">Device Status:</span>
+              {% if settings['e_sensor'] %}<small class="bpk text-success">Enabled</small>{% else %}<small class="bpk text-danger">Disabled</small>{% endif %}
+                  <div class="custom-control custom-checkbox mb-2">
+                  <input type="checkbox" class="custom-control-input" id="customCheck2" name="enable_temp" {{etmp}} aria-label="Checkbox for following text input">
+                  <label class="custom-control-label" for="customCheck2">Enable DHT22 Sensor</label>
+                  </div>
+                  
+                  <div class="input-group mb-3">
+                  <div class="input-group-prepend">
+                  <span style="width:150px;" class="input-group-text ">Sampling Rate</label>
+                  </div> 
+                  <input type="text" class="form-control" style="width:60px;" name="temp_sample" placeholder="Seconds" value="{{settings['s_samp']}}" aria-label="Dollar amount (with dot and two decimal places)">
+                  </div>
+
+
+                  <div class="input-group mb-3">
+                        <div class="input-group-prepend">
+                        <span style="width:150px;" class="input-group-text" for="temp_gpio">Sensor GPIO</label>
+                        </div> 
+                        <select name="temp_gpio" class="custom-select" id="temp_gpio">
+                          {% for pin in gpio_pins %}
+                          {% set tsel = '' %}
+                          {% if settings['s_gpio'] == pin['gpio'] %}
+                            {% set tsel = 'selected' %}
+                          {% endif %}
+                          <option {{tsel}} value="{{ pin['gpio'] }}">{{ pin['gpio'] }}</option>
+                          {% endfor %}      
+                        </select>
+                  </div>
+
+            </div>
+    </div>
+    
+     <div class="col-lg-5 col-md-12 col-sm-12">
+            <div class="form-control-dark agv aew">
+              <h5 class="bph text-warning">
+                Alerts
+              </h5>
+              <span class="bpi">Alert Status:</span>
+              {% if settings['s_alert'] %}<small class="bpk text-success">Enabled</small>{% else %}<small class="bpk text-danger">Disabled</small>{% endif %}
+                    <div class="custom-control custom-checkbox mb-2">
+                    <input type="checkbox" class="custom-control-input" id="enable_alerts" name="enable_alerts" {{ealt}} aria-label="Checkbox for following text input">
+                    <label class="custom-control-label" for="enable_alerts">Enable Alerts</label>
+                    </div>
+                    
+                  <div class="input-group mb-3">
+                  <div class="input-group-prepend">
+                  <span style="width:100px;" class="input-group-text">Send Email</label>
+                  </div> 
+                  <input type="text" autofill="false" class="form-control" style="width:60px;" name="sender_email" placeholder="Email" value="{{settings['s_send_email']}}" aria-label="">
+                  </div>
+
+                  <div class="input-group mb-3">
+                  <div class="input-group-prepend">
+                  <span style="width:130px;" class="input-group-text ">Send Password</label>
+                  </div> 
+                  <input type="password" class="form-control" style="width:60px;" name="sender_pw" placeholder="" value="{{settings['s_send_pw']}}" aria-label="">
+                  </div>
+
+
+                  <div class="input-group mb-3">
+                  <div class="input-group-prepend">
+                  <span style="width:100px;" class="input-group-text ">Alert Email</label>
+                  </div> 
+                  <input type="text" class="form-control" style="width:60px;" name="alert_email" placeholder="Email" value="{{settings['s_alert_email']}}" aria-label="">
+                  </div>
+
+            </div>
+    </div>
+    
+</div>
+</div>
+
+
+<div class="text-center">
+    <button type="submit" name="save_settings" class="btn btn-success"><i class="h3 pl-3 pr-3 fas fa-save"></i><br/>Apply</button>
+</div>
+
+
+
+</div>
+  
+
+
+
+</form>
+
+
+{% endblock %} 

@@ -1,0 +1,11 @@
+{% extends 'base.html' %}
+
+{% block head %}
+{{ parent() }}
+{% endblock %}
+
+{% block content %}
+
+<img class="rounded mx-auto d-block img-fluid" style="-webkit-user-select: none;" src="http://{{webcam_ip}}:8081/">
+
+{% endblock %} 
