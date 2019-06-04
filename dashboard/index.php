@@ -22,7 +22,6 @@ if(!isset($_SESSION['username']))
 //Check post variables for and form submits and run functions
 else
     {
-
     if(isset($_POST['save_device']))
        apply_setting($db);
     else if(isset($_POST['applySchedule']))
@@ -91,6 +90,10 @@ function load_pages($db, $twig){
     $sql = "SELECT * FROM settings WHERE id = (SELECT MAX(id) FROM settings)";
     $result = mysqli_query($db,$sql);
     $settings = mysqli_fetch_all($result,MYSQLI_ASSOC);
+    if($settings[0]['e_cels'])
+        $scaleString = 'C';
+    else
+        $scaleString = 'F';
     
     //Load all the MYSQL device types and sort them into a types array
     $sql = "SELECT * from device_types";
@@ -112,7 +115,7 @@ function load_pages($db, $twig){
     
     if($_GET['p'] == 'newbook')
       {
-      echo $twig->render('newbook.html', ['nav_menu' => $menu, 'devices' => $devices, 'triggers' => $triggers, 'gpio_pins' => $gpio_pins, 'settings' => $settings[0], 'py_cmd'=> $python_cmd, 'temperature' => $last_sensor[0]['temperature'], 'humidity' => $last_sensor[0]['humidity']]);
+      echo $twig->render('newbook.html', ['nav_menu' => $menu, 'scaleString' => $scaleString,'devices' => $devices, 'triggers' => $triggers, 'gpio_pins' => $gpio_pins, 'settings' => $settings[0], 'py_cmd'=> $python_cmd, 'temperature' => $last_sensor[0]['temperature'], 'humidity' => $last_sensor[0]['humidity']]);
       }
     
     //Scheduling a Device
@@ -121,7 +124,7 @@ function load_pages($db, $twig){
       $sql = "SELECT * from schedule WHERE schedule.d_id=".$_GET['d'];
       $result = mysqli_query($db,$sql);
       $deviceSchedule = mysqli_fetch_all($result,MYSQLI_ASSOC);
-      echo $twig->render('schedule.html', [ 'nav_menu' => $menu, 'devices' => $devices, 'triggers' => $triggers, 'gpio_pins' => $gpio_pins, 'ds_id' => $_GET['d'], 'deviceSchedule' => $deviceSchedule, 'settings' => $settings[0],'py_cmd'=> $python_cmd,'temperature' => $last_sensor[0]['temperature'], 'humidity' => $last_sensor[0]['humidity']]);
+      echo $twig->render('schedule.html', [ 'nav_menu' => $menu, 'scaleString' => $scaleString,'devices' => $devices, 'triggers' => $triggers, 'gpio_pins' => $gpio_pins, 'ds_id' => $_GET['d'], 'deviceSchedule' => $deviceSchedule, 'settings' => $settings[0],'py_cmd'=> $python_cmd,'temperature' => $last_sensor[0]['temperature'], 'humidity' => $last_sensor[0]['humidity']]);
       }
     //Wesite Logout
     elseif($_GET['p'] == 'logout')
@@ -132,7 +135,7 @@ function load_pages($db, $twig){
     //Webcam Page
     elseif($_GET['p'] == 'webcam')
       {
-      echo $twig->render('webcam.html', ['nav_menu' => $menu, 'settings' => $settings[0], 'webcam_ip' => $_SERVER['SERVER_ADDR'],'temperature' => $last_sensor[0]['temperature'], 'humidity' => $last_sensor[0]['humidity']]);
+      echo $twig->render('webcam.html', ['nav_menu' => $menu, 'scaleString' => $scaleString,'settings' => $settings[0], 'webcam_ip' => $_SERVER['SERVER_ADDR'],'temperature' => $last_sensor[0]['temperature'], 'humidity' => $last_sensor[0]['humidity']]);
       }
       
     //Calendar Page for Journal
@@ -167,7 +170,7 @@ function load_pages($db, $twig){
             $event_string .= "{title  : '<div class=\"d-flex\"><button type=\"button\" class=\"magnify btn btn-warning btn-sm\" style=\"border-radius:50%;\"><i class=\"p-0 fas fa-sticky-note\"></i></button><div class=\"d-none d-sm-block align-middle pt-2 pl-1 font-weight-bold\">".$date->format('g:iA')."</div></div>', start  : '".$date->format('Y-m-d')."', description: '".$date->format('g:iA').' : '.addslashes($event['event_note'])."'},";
          $journal_dates[$date->format('Y-m-d')] = $date_array;
         }
-      echo $twig->render('calendar.html', ['nav_menu' => $menu, 'settings' => $settings[0], 'journal_dates' => $journal_dates, 'event_string' => $event_string, 'py_cmd'=> $python_cmd,'temperature' => $last_sensor[0]['temperature'], 'humidity' => $last_sensor[0]['humidity']]);
+      echo $twig->render('calendar.html', ['nav_menu' => $menu, 'scaleString' => $scaleString,'settings' => $settings[0], 'journal_dates' => $journal_dates, 'event_string' => $event_string, 'py_cmd'=> $python_cmd,'temperature' => $last_sensor[0]['temperature'], 'humidity' => $last_sensor[0]['humidity']]);
     }
     
     //Archive Page for Journal
@@ -193,7 +196,7 @@ function load_pages($db, $twig){
             $journal_id[$j['id']] = $j;
            }
 
-         echo $twig->render('archive.html', ['nav_menu' => $menu, 'settings' => $settings[0], 'journals' => $journal_id, 'event_count' => $event_count, 'py_cmd'=> $python_cmd,'temperature' => $last_sensor[0]['temperature'], 'humidity' => $last_sensor[0]['humidity']]);
+         echo $twig->render('archive.html', ['nav_menu' => $menu, 'scaleString' => $scaleString,'settings' => $settings[0], 'journals' => $journal_id, 'event_count' => $event_count, 'py_cmd'=> $python_cmd,'temperature' => $last_sensor[0]['temperature'], 'humidity' => $last_sensor[0]['humidity']]);
       }
       
     //Journal Page
@@ -282,14 +285,40 @@ function load_pages($db, $twig){
       $sql = "SELECT breeder,genetics,nutrients,method,media,lighting,note from journal WHERE id=".$_GET['jid'];
       $result = mysqli_query($db,$sql);
       $journal_desc = mysqli_fetch_all($result,MYSQLI_ASSOC);
-      echo $twig->render('journal.html', ['nav_menu' => $menu, 'todays_date' => date('Y-m-d'), 'settings' => $settings[0], 'journal' => $journal, 'etype' => $managed_types, 'journal_events' => $journal_dates, 'journal_desc' => $journal_desc[0], 'py_cmd'=> $python_cmd,'temperature' => $last_sensor[0]['temperature'], 'humidity' => $last_sensor[0]['humidity']]);
+      
+      $sql = "select DATE_FORMAT(log_date, '%Y-%m-%d') as date, min(temperature) as min_temperature, max(temperature) as max_temperature from sensor_log group by DATE_FORMAT(log_date, '%d-%m-%Y') order by log_date";
+      $result = mysqli_query($db,$sql);
+      $max_temps = mysqli_fetch_all($result,MYSQLI_ASSOC);
+      $sql = "select DATE_FORMAT(log_date, '%Y-%m-%d') as date, min(humidity) as min_humidity, max(humidity) as max_humidity from sensor_log group by DATE_FORMAT(log_date, '%d-%m-%Y') order by log_date";
+      $result = mysqli_query($db,$sql);
+      $max_humiditys = mysqli_fetch_all($result,MYSQLI_ASSOC);
+      
+      
+      $mt = array();
+      foreach ($max_temps as $temp)
+        {
+         $date = new DateTime($temp['date']);
+         $mt[$date->format('Y-m-d')] = $temp;
+        }
+       $max_temps = $mt;
+       
+      $mh = array();
+      foreach ($max_humiditys as $hum)
+        {
+         $date = new DateTime($hum['date']);
+         $mh[$date->format('Y-m-d')] = $hum;
+        }
+       $max_humiditys = $mh;
+
+            
+      echo $twig->render('journal.html', ['nav_menu' => $menu, 'scaleString' => $scaleString,'todays_date' => date('Y-m-d'), 'settings' => $settings[0], 'journal' => $journal, 'etype' => $managed_types, 'journal_events' => $journal_dates, 'journal_desc' => $journal_desc[0], 'py_cmd'=> $python_cmd,'temperature' => $last_sensor[0]['temperature'], 'humidity' => $last_sensor[0]['humidity'], 'max_temps' => $max_temps, 'max_humiditys' => $max_humiditys]);
       }
 
 
     //Website Settings Page
     elseif($_GET['p'] == 'settings')
       {
-      echo $twig->render('settings.html', ['nav_menu' => $menu, 'gpio_pins' => $gpio_pins, 'settings' => $settings[0], 'py_cmd'=> $python_cmd,'temperature' => $last_sensor[0]['temperature'], 'humidity' => $last_sensor[0]['humidity']]);
+      echo $twig->render('settings.html', ['nav_menu' => $menu, 'scaleString' => $scaleString,'gpio_pins' => $gpio_pins, 'settings' => $settings[0], 'py_cmd'=> $python_cmd,'temperature' => $last_sensor[0]['temperature'], 'humidity' => $last_sensor[0]['humidity']]);
       }
       
     //Website History Page
@@ -306,7 +335,7 @@ function load_pages($db, $twig){
       $sql = "SELECT d_name from devices WHERE id=".$_GET['device'];
       $result = mysqli_query($db,$sql);
       $deviceName = mysqli_fetch_all($result,MYSQLI_ASSOC);
-      echo $twig->render('log.html', ['nav_menu' => $menu, 'deviceLog' => $deviceLog, 'settings' => $settings[0], 'devices' => $devices, 'deviceName' => $deviceName[0]['d_name'], 'protocols' => $protocol_types, 'py_cmd'=> $python_cmd,'temperature' => $last_sensor[0]['temperature'], 'humidity' => $last_sensor[0]['humidity']]);
+      echo $twig->render('log.html', ['nav_menu' => $menu, 'scaleString' => $scaleString,'deviceLog' => $deviceLog, 'settings' => $settings[0], 'devices' => $devices, 'deviceName' => $deviceName[0]['d_name'], 'protocols' => $protocol_types, 'py_cmd'=> $python_cmd,'temperature' => $last_sensor[0]['temperature'], 'humidity' => $last_sensor[0]['humidity']]);
       }
       
     //Website Users Page
@@ -315,7 +344,7 @@ function load_pages($db, $twig){
       $sql = "SELECT * from user";
       $result = mysqli_query($db,$sql);
       $users = mysqli_fetch_all($result,MYSQLI_ASSOC);
-      echo $twig->render('users.html', ['nav_menu' => $menu, 'settings' => $settings[0], 'python_status' => $py_status, 'users' => $users, 'py_cmd'=> $python_cmd,'temperature' => $last_sensor[0]['temperature'], 'humidity' => $last_sensor[0]['humidity']]);
+      echo $twig->render('users.html', ['nav_menu' => $menu, 'scaleString' => $scaleString,'settings' => $settings[0], 'python_status' => $py_status, 'users' => $users, 'py_cmd'=> $python_cmd,'temperature' => $last_sensor[0]['temperature'], 'humidity' => $last_sensor[0]['humidity']]);
       }
 
     //Dashboard Home or Index page
@@ -401,109 +430,158 @@ function load_pages($db, $twig){
            }
           }
         
-      echo $twig->render('index.html', ['nav_menu' => $menu, 'devices' => $devices, 'triggers' => $triggers, 'gpio_pins' => $gpio_pins, 'settings' => $settings[0], 'python_status' => $py_status, 'temperature_string' => $tmp_data_string, 'humidity_string' => $hmd_data_string, 'x_axis_string' => $x_axis_label, 'py_cmd'=> $python_cmd,'temperature' => $last_sensor[0]['temperature'], 'humidity' => $last_sensor[0]['humidity']]);
+      echo $twig->render('index.html', ['nav_menu' => $menu, 'scaleString' => $scaleString,'devices' => $devices, 'triggers' => $triggers, 'gpio_pins' => $gpio_pins, 'settings' => $settings[0], 'python_status' => $py_status, 'temperature_string' => $tmp_data_string, 'humidity_string' => $hmd_data_string, 'x_axis_string' => $x_axis_label, 'py_cmd'=> $python_cmd,'temperature' => $last_sensor[0]['temperature'], 'humidity' => $last_sensor[0]['humidity']]);
       }
       
     //Website Devices Page
     elseif($_GET['p'] == 'devices')
       {
-      echo $twig->render('devices.html', ['nav_menu' => $menu, 'devices' => $devices, 'device_types' => $device_types, 'triggers' => $triggers, 'trigger_types' => $trigger_types, 'gpio_pins' => $gpio_pins, 'settings' => $settings[0], 'python_status' => $py_status, 'protocols' => $protocol_types, 'py_cmd'=> $python_cmd,'temperature' => $last_sensor[0]['temperature'], 'humidity' => $last_sensor[0]['humidity']]);
+      echo $twig->render('devices.html', ['nav_menu' => $menu, 'scaleString' => $scaleString,'devices' => $devices, 'device_types' => $device_types, 'triggers' => $triggers, 'trigger_types' => $trigger_types, 'gpio_pins' => $gpio_pins, 'settings' => $settings[0], 'python_status' => $py_status, 'protocols' => $protocol_types, 'py_cmd'=> $python_cmd,'temperature' => $last_sensor[0]['temperature'], 'humidity' => $last_sensor[0]['humidity']]);
       }
       
     elseif($_GET['p'] == 'chart')
       {
-      
-      if(isset($_GET['chart']))
-          {
-          if($_GET['chart'] == 'd')
-            {
-            $sql = "SELECT * FROM (SELECT @row := @row +1 AS rownum, log_date, temperature, humidity  FROM (SELECT @row :=0) r, sensor_log) ranked WHERE rownum % 3 = 1 AND log_date >= NOW() - INTERVAL 1 DAY";
-            }
-          else if($_GET['chart'] == 'w')
-            {
-            $sql = "SELECT * FROM (SELECT @row := @row +1 AS rownum, log_date, temperature, humidity  FROM (SELECT @row :=0) r, sensor_log) ranked WHERE rownum % 5 = 1 AND log_date >= DATE(NOW()) - INTERVAL 7 DAY";
-            }
-          else if($_GET['chart'] == 'm')
-            {
-            $sql = "SELECT * FROM (SELECT @row := @row +1 AS rownum, log_date, temperature, humidity  FROM (SELECT @row :=0) r, sensor_log) ranked WHERE rownum % 6 = 1 AND log_date >= DATE(NOW()) - INTERVAL 30 DAY";
-            }
-
-          }
-         else
-            $sql = "SELECT * FROM (SELECT @row := @row +1 AS rownum, log_date, temperature, humidity  FROM (SELECT @row :=0) r, sensor_log) ranked WHERE rownum % 3 = 1 AND log_date >= NOW() - INTERVAL 1 DAY";
-        $result = mysqli_query($db,$sql);
-        $sensor_log = mysqli_fetch_all($result,MYSQLI_ASSOC);
-        $log_dates = array();
-        $avg_hmd = 0;
-        $avg_tmp = 0;
-        $tmp_data_string = '';
-        $hmd_data_string = '';
-        $x_axis_label    = '';
-        foreach ($sensor_log as $log)
-        {
-         $date = new DateTime($log['log_date']);
-         $date_array = $log_dates[$date->format('H')];
-         $date_array[] = $log;
-         $log_dates[$date->format('Y-m-d')][$date->format('G')] = $date_array;
-        }
-        foreach($log_dates as $date_time => $log_date)
-         {
-         foreach ($log_date as $time => $logs )
-           {
-           $size = sizeof($log_date[$time]);
-           foreach($logs as $log)
-           {
-            $avg_hmd = $avg_hmd + $log['humidity'];
-            $avg_tmp = $avg_tmp + $log['temperature'];
-           }
-           $comma = ',';
-           $x_first_time = '';
-           if ($tmp_data_string == '')
+      $comma = ',';
+      if($_GET['type'] == 'avg' or $_GET['type'] == '')      
+      {
+           if(isset($_GET['chart']))
                {
-               $comma = '';
-               $x_first_time = $date_time;
-               }
-
-           if($time >= 12)
-              {
-              if($time > 12)
-                 $time_str = ($time-12).'PM';
-              else
-                 $time_str = ($time).'PM';
-              }
-           else
-              {
-                 if($time == 0)
-                    $time_str = '12AM';
-                 else
-                    $time_str = $time.'AM';
-              }
-              
-           if($_GET['chart'] == 'w' or $_GET['chart'] == 'm')
+               if($_GET['chart'] == 'd')
                  {
-                 #if($time == 12 or $time == 0)
-                    $time_str = $date_time.' '.$time_str;
+                 $sql = "SELECT * FROM (SELECT @row := @row +1 AS rownum, log_date, temperature, humidity  FROM (SELECT @row :=0) r, sensor_log) ranked WHERE rownum % 3 = 1 AND log_date >= NOW() - INTERVAL 1 DAY";
                  }
-           $tmp_data_string = $tmp_data_string.$comma.'"'.round($avg_tmp/$size).'"';
-           $hmd_data_string = $hmd_data_string.$comma.'"'.round($avg_hmd/$size).'"';
-           $x_axis_label = $x_axis_label.$comma.'"'.$time_str.'"';
-           $avg_hmd = 0;
-           $avg_tmp = 0;
-           }
-          }
-        
+               else if($_GET['chart'] == 'w')
+                 {
+                 $sql = "SELECT * FROM (SELECT @row := @row +1 AS rownum, log_date, temperature, humidity  FROM (SELECT @row :=0) r, sensor_log) ranked WHERE rownum % 5 = 1 AND log_date >= DATE(NOW()) - INTERVAL 7 DAY";
+                 }
+               else if($_GET['chart'] == 'm')
+                 {
+                 $sql = "SELECT * FROM (SELECT @row := @row +1 AS rownum, log_date, temperature, humidity  FROM (SELECT @row :=0) r, sensor_log) ranked WHERE rownum % 6 = 1 AND log_date >= DATE(NOW()) - INTERVAL 30 DAY";
+                 }
+
+               }
+              else
+                 $sql = "SELECT * FROM (SELECT @row := @row +1 AS rownum, log_date, temperature, humidity  FROM (SELECT @row :=0) r, sensor_log) ranked WHERE rownum % 3 = 1 AND log_date >= NOW() - INTERVAL 1 DAY";
+             $result = mysqli_query($db,$sql);
+             $sensor_log = mysqli_fetch_all($result,MYSQLI_ASSOC);
+             $log_dates = array();
+             $avg_hmd = 0;
+             $avg_tmp = 0;
+             $tmp_data_string = '';
+             $hmd_data_string = '';
+             $x_axis_label    = '';
+             foreach ($sensor_log as $log)
+             {
+              $date = new DateTime($log['log_date']);
+              $date_array = $log_dates[$date->format('H')];
+              $date_array[] = $log;
+              $log_dates[$date->format('Y-m-d')][$date->format('G')] = $date_array;
+             }
+             foreach($log_dates as $date_time => $log_date)
+              {
+              foreach ($log_date as $time => $logs )
+                {
+                $size = sizeof($log_date[$time]);
+                foreach($logs as $log)
+                {
+                 $avg_hmd = $avg_hmd + $log['humidity'];
+                 $avg_tmp = $avg_tmp + $log['temperature'];
+                }
+                $x_first_time = '';
+                $comma = ',';
+                if ($tmp_data_string == '')
+                    {
+                    $comma = '';
+                    $x_first_time = $date_time;
+                    }
+
+                if($time >= 12)
+                   {
+                   if($time > 12)
+                      $time_str = ($time-12).'PM';
+                   else
+                      $time_str = ($time).'PM';
+                   }
+                else
+                   {
+                      if($time == 0)
+                         $time_str = '12AM';
+                      else
+                         $time_str = $time.'AM';
+                   }
+                   
+                if($_GET['chart'] == 'w' or $_GET['chart'] == 'm')
+                      {
+                      #if($time == 12 or $time == 0)
+                         $time_str = $date_time.' '.$time_str;
+                      }
+                $tmp_data_string = $tmp_data_string.$comma.'"'.round($avg_tmp/$size).'"';
+                $hmd_data_string = $hmd_data_string.$comma.'"'.round($avg_hmd/$size).'"';
+                $x_axis_label = $x_axis_label.$comma.'"'.$time_str.'"';
+                $avg_hmd = 0;
+                $avg_tmp = 0;
+                }
+               }
+           
+           
+           
+              echo $twig->render('charts.html', ['nav_menu' => $menu, 'scaleString' => $scaleString,'devices' => $devices, 'settings' => $settings[0],'temperature_string' => $tmp_data_string, 'humidity_string' => $hmd_data_string, 'x_axis_string' => $x_axis_label,'python_status' => $py_status, 'temperature' => $last_sensor[0]['temperature'], 'humidity' => $last_sensor[0]['humidity']]);        
+      }
+      elseif($_GET['type'] == 'hilo')
+      {
       
-      
-      
-      
-      
-      
-      
-      
-      
-      
-      
-      echo $twig->render('charts.html', ['nav_menu' => $menu, 'devices' => $devices, 'settings' => $settings[0],'temperature_string' => $tmp_data_string, 'humidity_string' => $hmd_data_string, 'x_axis_string' => $x_axis_label,'python_status' => $py_status, 'temperature' => $last_sensor[0]['temperature'], 'humidity' => $last_sensor[0]['humidity']]);
+           if($_GET['chart'] == 'w' or !isset($_GET['chart']))
+              $interval = '7';
+           if($_GET['chart'] == 'm')
+              $interval = '30';
+           if($_GET['chart'] == 'y')
+              $interval = '365';
+
+           $sql = "select DATE_FORMAT(log_date, '%Y-%m-%d') as date, min(temperature) as min_temperature, max(temperature) as max_temperature from sensor_log WHERE log_date >= DATE(NOW()) - INTERVAL ".$interval." DAY group by DATE_FORMAT(log_date, '%d-%m-%Y') order by log_date";
+           $result = mysqli_query($db,$sql);
+           $max_temps = mysqli_fetch_all($result,MYSQLI_ASSOC);
+           $sql = "select DATE_FORMAT(log_date, '%Y-%m-%d') as date, min(humidity) as min_humidity, max(humidity) as max_humidity from sensor_log WHERE log_date >= DATE(NOW()) - INTERVAL ".$interval." DAY group by DATE_FORMAT(log_date, '%d-%m-%Y') order by log_date";
+           $result = mysqli_query($db,$sql);
+           $max_humiditys = mysqli_fetch_all($result,MYSQLI_ASSOC);
+           
+           
+           $hitemp_string = '';
+           $lotemp_string = '';
+           $hilo_x_string = '';      
+           foreach ($max_temps as $temp)
+             {
+              $date = new DateTime($temp['date']);
+                  if ($hitemp_string == '')
+                    $comma = '';
+                  else
+                    $comma = ',';
+
+              $hitemp_string = $hitemp_string.$comma.'"'.round($temp['max_temperature']).'"';
+              $lotemp_string = $lotemp_string.$comma.'"'.round($temp['min_temperature']).'"';
+              $hilo_x_string = $hilo_x_string.$comma.'"'.$date->format('Y-m-d').'"';
+             }
+            
+           $hihumid_string = '';
+           $lohumid_string = '';
+
+           foreach ($max_humiditys as $hum)
+             {
+              $date = new DateTime($hum['date']);
+                  if ($hihumid_string == '')
+                    $comma = '';
+                  else
+                    $comma = ',';
+
+              $hihumid_string = $hihumid_string.$comma.'"'.round($hum['max_humidity']).'"';
+              $lohumid_string = $lohumid_string.$comma.'"'.round($hum['min_humidity']).'"';
+             }
+
+           echo $twig->render('charts.html', ['nav_menu' => $menu, 'scaleString' => $scaleString,'temperature' => $last_sensor[0]['temperature'], 'humidity' => $last_sensor[0]['humidity'], 'hitemp_string' => $hitemp_string, 'lotemp_string' => $lotemp_string,'hihumid_string' => $hihumid_string, 'lohumid_string' => $lohumid_string, 'hilo_x_string' => $hilo_x_string]);
+      }
+      else
+        {
+           echo $twig->render('charts.html', ['nav_menu' => $menu, 'scaleString' => $scaleString,'temperature' => $last_sensor[0]['temperature'], 'humidity' => $last_sensor[0]['humidity']]);        
+        }
       }
       
     exit; 
@@ -677,6 +755,7 @@ function save_settings($db) {
     $wbcam = 0;
     $tmp   = 0;
     $hmd   = 0;
+    $cels  = 0;
     $alrt  = 0;     
     if(isset($_POST['enable_webcam']))
        $wbcam = 1;
@@ -684,7 +763,9 @@ function save_settings($db) {
        $tmp   = 1;
     if(isset($_POST['enable_alerts']))
        $alrt   = 1;
-    $sql = "INSERT INTO settings(e_webcam, e_sensor, s_samp, s_gpio, s_alert, s_alert_email, s_send_email, s_send_pw) VALUES ('".$wbcam."','".$tmp."','".$_POST['temp_sample']."', '".$_POST['temp_gpio']."', '".$alrt."', '".$_POST['alert_email']."','".$_POST['sender_email']."','".$_POST['sender_pw']."')";
+    if(isset($_POST['enable_cels']))
+       $cels  = 1;
+    $sql = "INSERT INTO settings(d_name,e_webcam, e_sensor, s_samp, s_tadj, s_hadj, s_gpio, s_alert, s_alert_email, s_send_email, s_send_pw, e_cels) VALUES ('".$_POST['name_topic']."','".$wbcam."','".$tmp."','".$_POST['temp_sample']."', '".$_POST['temp_adj']."'  , '".$_POST['hum_adj']."'  , '".$_POST['temp_gpio']."', '".$alrt."', '".$_POST['alert_email']."','".$_POST['sender_email']."','".$_POST['sender_pw']."', '".$cels."')";
     $result = mysqli_query($db,$sql);
     $sql = "UPDATE menu SET m_enabled='.$wbcam.' WHERE m_url='webcam'";
     $result = mysqli_query($db,$sql);
