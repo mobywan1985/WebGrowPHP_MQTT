@@ -66,7 +66,8 @@ Dropzone.options.myDropzone= {
         
         this.on("success", function(files, response) {
 //        alert(JSON.stringify(response));
-        location.reload();
+        window.location.assign(document.URL);
+        //location.reload();
         // Gets triggered when the files have successfully been sent.
         // Redirect user or notify of success.
         });
@@ -122,11 +123,11 @@ $(function() {
      <div class="row">
           <div class="dcard bg-transparent col-lg-3 col-sm-4 col-6 p-2">
            <div class="dcard-header p-0 m-1 bg-transparent text-warning border-light h6">Breeder : Strain</div>
-           <div class="dcard-body p-0 m-1"><label class="badge badge-success badge-pill">{{journal_desc['breeder']}}</label>&nbsp;:&nbsp;<label class="badge badge-success badge-pill">{{journal_desc['genetics']}}</label></div>
+           <div class="dcard-body p-0 m-1"><label class="badge badge-success badge-pill">{{journal_desc['breeder']}}</label>&nbsp;|&nbsp;<label class="badge badge-success badge-pill">{{journal_desc['genetics']}}</label></div>
           </div>
           <div class="dcard bg-transparent col-lg-3 col-sm-4 col-6 p-2">
            <div class="dcard-header p-0 m-1 bg-transparent text-warning border-light h6">Method : Media</div>
-           <div class="dcard-body p-0 m-1"><label class="badge badge-success badge-pill">{{journal_desc['method']}}</label>&nbsp;:&nbsp;<label class="badge badge-success badge-pill">{{journal_desc['media']}}</label></div>
+           <div class="dcard-body p-0 m-1"><label class="badge badge-success badge-pill">{{journal_desc['method']}}</label>&nbsp;|&nbsp;<label class="badge badge-success badge-pill">{{journal_desc['media']}}</label></div>
           </div>
           <div class="dcard bg-transparent col-lg-3 col-sm-4 col-6 p-2">
            <div class="dcard-header p-0 m-1 bg-transparent text-warning border-light h6">Nutrients</div>
@@ -178,6 +179,25 @@ $(function() {
                  <small class="bpk text-success">Clear</small></a>
                  <hr class="aee pb-0">
                  <div class="container ml-0 pl-0">
+
+                    <div class="justify-content-start">
+                    <span style="width:20px;" class="fas fa-thermometer-half"></span>
+                    <span class="bpi">High:</span>
+                    <span><small class="text-success">{{max_temps[todays_date|date('Y-m-d')]['max_temperature']}}{{scaleString}}</small></span>
+                    <span class="bpi">Low:</span>
+                    <span><small class="text-warning">{{max_temps[todays_date|date('Y-m-d')]['min_temperature']}}{{scaleString}}</small></span>
+                    <br/>
+                    </div>
+                    <div class="justify-content-start">
+                    <span style="width:20px;" class="fas fa-cloud-rain"></span>
+                    <span class="bpi">High:</span>
+                    <span><small class="text-success">{{max_humiditys[todays_date|date('Y-m-d')]['max_humidity']}}%</small></span>
+                    <span class="bpi">Low:</span>
+                    <span><small class="text-info">{{max_humiditys[todays_date|date('Y-m-d')]['min_humidity']}}%</small></span>
+                    <br/>
+                    </div>
+                 
+                 
                  {% for e in journal_events[todays_date] %}
                     <div class="justify-content-start">
                     <span style="width:20px;" class="{{ etype[e['event_type']]['icon']}}"></span>
@@ -213,6 +233,27 @@ $(function() {
               <span class="bpi">Entry - {{ leftDays }} {% if leftDays == 1 %}day{% else %}days{%endif%} ago</span>
                  <a href="#" onclick="setClear('{{key|date('m-d-Y')}}');$(this).closest('form').submit();"><small class="bpk text-success">Clear</small></a>
                  <hr class="aee pb-0">
+                 
+                 
+                    <div class="justify-content-start">
+                    <span style="width:20px;" class="fas fa-thermometer-half"></span>
+                    <span class="bpi">High:</span>
+                    <span><small
+                    class="text-success">{{max_temps[key|date('Y-m-d')]['max_temperature']}}{{scaleString}}</small></span>
+                    <span class="bpi">Low:</span>
+                    <span><small class="text-warning">{{max_temps[key|date('Y-m-d')]['min_temperature']}}{{scaleString}}</small></span>
+                    <br/>
+                    </div>
+                    <div class="justify-content-start">
+                    <span style="width:20px;" class="fas fa-cloud-rain"></span>
+                    <span class="bpi">High:</span>
+                    <span><small class="text-success">{{max_humiditys[key|date('Y-m-d')]['max_humidity']}}%</small></span>
+                    <span class="bpi">Low:</span>
+                    <span><small class="text-info">{{max_humiditys[key|date('Y-m-d')]['min_humidity']}}%</small></span>
+                    <br/>
+                    </div>
+                 
+                 
                  {% for e in event %}
                     <span style="width:20px;" class="{{ etype[e['event_type']]['icon']}}"></span>
                     <span class="bpi">{{e['event_date']|date('g:i A')}}</span>

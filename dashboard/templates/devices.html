@@ -6,7 +6,6 @@
 
 function sendState(id, gpio, state)
 {
-
 if(state)
   func = 'ON';
 else
@@ -14,7 +13,7 @@ else
 message = new Paho.MQTT.Message(func);
 message.qos = 2;
 message.retained = false;
-message.destinationName = "cmnd/webgrow/device/"+id+"/POWER";
+message.destinationName = "cmnd/{{settings['d_name']}}/device/"+id+"/POWER";
 client.send(message);
 
 }
@@ -29,7 +28,7 @@ if(state)
 else
   func = 'OFF';
 message = new Paho.MQTT.Message(func);
-message.destinationName = "cmnd/webgrow/device/"+id+"/RUN";
+message.destinationName = "cmnd/{{settings['d_name']}}/device/"+id+"/RUN";
 client.send(message);
 }
 
@@ -73,10 +72,10 @@ function setInfo(protocol, id, topic, gpio, last_run) {
  $("#info_last_run").html(runHtml);
  if(protocol == 0)
  {
- topic1 = "cmnd/webgrow/device/"+id+"/POWER ON";
- topic2 = "cmnd/webgrow/device/"+id+"/POWER OFF";
- topic3 = "cmnd/webgrow/gpio/"+gpio+"/POWER ON";
- topic4 = "cmnd/webgrow/gpio/"+gpio+"/POWER OFF";
+ topic1 = "cmnd/{{settings['d_name']}}/device/"+id+"/POWER ON";
+ topic2 = "cmnd/{{settings['d_name']}}/device/"+id+"/POWER OFF";
+ topic3 = "cmnd/{{settings['d_name']}}/gpio/"+gpio+"/POWER ON";
+ topic4 = "cmnd/{{settings['d_name']}}/gpio/"+gpio+"/POWER OFF";
  topic_html = '<div class="p-2 text-success" >'+
                '<span class="bpi">Turning ON:</span><br/>'+
                '<span>'+topic1+'</span><br/>'+
@@ -93,8 +92,8 @@ function setInfo(protocol, id, topic, gpio, last_run) {
  }
  else if(protocol == 20)
  {
- topic1 = "cmnd/webgrow/device/"+id+"/POWER ON";
- topic2 = "cmnd/webgrow/device/"+id+"/POWER OFF";
+ topic1 = "cmnd/{{settings['d_name']}}/device/"+id+"/POWER ON";
+ topic2 = "cmnd/{{settings['d_name']}}/device/"+id+"/POWER OFF";
  topic3 = "cmnd/"+topic+"/POWER ON";
  topic4 = "cmnd/"+topic+"/POWER OFF";
  topic_html = '<div class="p-2 text-success" >'+

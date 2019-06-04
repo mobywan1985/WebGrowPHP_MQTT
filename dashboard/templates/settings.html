@@ -18,14 +18,35 @@
   {% set etmp = 'checked' %}
 {% endif %}
 
+{% if settings['e_cels'] %}
+  {% set ecels = 'checked' %}
+{% endif %}
+
 {% if settings['s_alert'] %}
   {% set ealt = 'checked' %}
 {% endif %}
 
 <div class="container p-0">
 <div class="row">
-    <div class="col-lg-3 col-md-12 col-sm-12">
+
+
+
+
+    <div class="col-lg-12 col-md-12 col-sm-12">
             <div class="form-control-dark agv aew">
+              <h5 class="bph text-warning mb-2">
+                Device Name/Topic
+              </h5>
+                  <div class="input-group mb-3" style="max-width:600px;">
+                  <div class="input-group-prepend">
+                  <span style="width:120px;" class="input-group-text">Name/Topic</label>
+                  </div> 
+                  <input type="text" class="form-control" name="name_topic" placeholder="webgrow" value="{{settings['d_name']}}" aria-label="">
+                  </div>
+                  
+             <hr class="mt-4 mb-4" style="border-color:#668;">            
+             
+             
               <h5 class="bph text-warning">
                 Webcam
               </h5>
@@ -35,13 +56,11 @@
                     <input type="checkbox" class="custom-control-input" id="customCheck1" name="enable_webcam" {{ewbcm}} aria-label="Checkbox for following text input">
                     <label class="custom-control-label" for="customCheck1">Enable Webcam</label>
                     </div>
-            </div>
-    </div>
-    
-    
-    <div class="col-lg-4 col-md-12 col-sm-12">
-            <div class="form-control-dark agv aew">
-              <h5 class="bph text-warning">
+              
+              <hr class="mt-4 mb-4" style="border-color:#668;"> 
+              
+                    
+              <h5 class="bph text-warning">                    
                 DHT22 Sensor
               </h5>
               <span class="bpi">Device Status:</span>
@@ -51,17 +70,39 @@
                   <label class="custom-control-label" for="customCheck2">Enable DHT22 Sensor</label>
                   </div>
                   
-                  <div class="input-group mb-3">
+                  
+                  <div class="custom-control custom-checkbox mb-2">
+                  <input type="checkbox" class="custom-control-input" id="customCheck3" name="enable_cels" {{ecels}} aria-label="Checkbox for following text input">
+                  <label class="custom-control-label" for="customCheck3">Celsius Scale</label>
+                  </div>
+                  
+                  
+                  <div class="input-group mb-3" style="max-width:400px;">
                   <div class="input-group-prepend">
-                  <span style="width:150px;" class="input-group-text ">Sampling Rate</label>
+                  <span style="width:120px;" class="input-group-text ">Sampling Rate</label>
                   </div> 
-                  <input type="text" class="form-control" style="width:60px;" name="temp_sample" placeholder="Seconds" value="{{settings['s_samp']}}" aria-label="Dollar amount (with dot and two decimal places)">
+                  <input type="text" class="form-control" style="width:60px;" name="temp_sample" placeholder="Seconds" value="{{settings['s_samp']}}" aria-label="">
+                  </div>
+                   
+                   
+                  <div class="input-group mb-3" style="max-width:400px;">
+                  <div class="input-group-prepend">
+                  <span style="width:120px;" class="input-group-text ">Temp Adj.</label>
+                  </div> 
+                  <input type="text" class="form-control" name="temp_adj" placeholder="Degrees" value="{{settings['s_tadj']}}" aria-label="">
+                  </div>
+                  
+                  <div class="input-group mb-3" style="max-width:400px;">
+                  <div class="input-group-prepend">
+                  <span style="width:120px;" class="input-group-text ">Humidity Adj.</label>
+                  </div> 
+                  <input type="text" class="form-control" name="hum_adj" placeholder="Percent" value="{{settings['s_hadj']}}" aria-label="">
                   </div>
 
 
-                  <div class="input-group mb-3">
+                  <div class="input-group mb-3" style="max-width:400px;">
                         <div class="input-group-prepend">
-                        <span style="width:150px;" class="input-group-text" for="temp_gpio">Sensor GPIO</label>
+                        <span style="width:120px;" class="input-group-text" for="temp_gpio">Sensor GPIO</label>
                         </div> 
                         <select name="temp_gpio" class="custom-select" id="temp_gpio">
                           {% for pin in gpio_pins %}
@@ -73,14 +114,12 @@
                           {% endfor %}      
                         </select>
                   </div>
-
-            </div>
-    </div>
-    
-     <div class="col-lg-5 col-md-12 col-sm-12">
-            <div class="form-control-dark agv aew">
+ 
+              <hr class="mt-4 mb-4" style="border-color:#668;"> 
+               
+ 
               <h5 class="bph text-warning">
-                Alerts
+                Email Alerts
               </h5>
               <span class="bpi">Alert Status:</span>
               {% if settings['s_alert'] %}<small class="bpk text-success">Enabled</small>{% else %}<small class="bpk text-danger">Disabled</small>{% endif %}
@@ -89,14 +128,14 @@
                     <label class="custom-control-label" for="enable_alerts">Enable Alerts</label>
                     </div>
                     
-                  <div class="input-group mb-3">
+                  <div class="input-group mb-3" style="max-width:600px;">
                   <div class="input-group-prepend">
                   <span style="width:100px;" class="input-group-text">Send Email</label>
                   </div> 
                   <input type="text" autofill="false" class="form-control" style="width:60px;" name="sender_email" placeholder="Email" value="{{settings['s_send_email']}}" aria-label="">
                   </div>
 
-                  <div class="input-group mb-3">
+                  <div class="input-group mb-3" style="max-width:600px;">
                   <div class="input-group-prepend">
                   <span style="width:130px;" class="input-group-text ">Send Password</label>
                   </div> 
@@ -104,15 +143,40 @@
                   </div>
 
 
-                  <div class="input-group mb-3">
+                  <div class="input-group mb-3" style="max-width:600px;">
                   <div class="input-group-prepend">
                   <span style="width:100px;" class="input-group-text ">Alert Email</label>
                   </div> 
                   <input type="text" class="form-control" style="width:60px;" name="alert_email" placeholder="Email" value="{{settings['s_alert_email']}}" aria-label="">
                   </div>
+              <!--
+              <hr class="mt-4 mb-4" style="border-color:#668;">            
+             
+             
+              <h5 class="bph text-warning">
+                Slave Devices
+              </h5>
+              <span class="bpi">Slaves Enabled:</span>
+              {% if settings['e_slaves'] %}<small class="bpk text-success">Enabled</small>{% else %}<small class="bpk text-danger">Disabled</small>{% endif %}
+                    <div class="custom-control custom-checkbox mb-2">
+                    <input type="checkbox" class="custom-control-input" id="customCheck1" name="enable_slaves" {{eslvs}} aria-label="Checkbox for following text input">
+                    <label class="custom-control-label" for="customCheck1">Enable Slaves</label>
+                    </div>
+             --!>
+
 
             </div>
+            
+              
+            
+            
     </div>
+
+
+
+
+    
+    
     
 </div>
 </div>

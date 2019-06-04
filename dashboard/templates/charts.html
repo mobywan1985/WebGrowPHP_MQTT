@@ -9,16 +9,33 @@
 
 {% block content %}
 
+<div class="bs pb-4" data-example-id="">
+<div class="bpu">
+  <ul class="nav pb bpv bpx">
+
+    <li class="pa">
+      <a class="oy {% if _get['type'] == 'avg' or _get['type'] == ''%}active{% endif %}" href="?p=chart&type=avg">Average</a>
+    </li>
+    <li class="pa">
+      <a class="oy {% if _get['type'] == 'hilo'%}active{% endif %}" href="?p=chart&type=hilo">High/Low</a>
+    </li>
+<!--    <li class="pa">
+      <a class="oy {% if _get['type'] == 'oth'%}active{% endif %}" href="?p=chart&type=oth">Other</a>
+    </li>--!>
+  </ul>
+</div>
+</div>
+
 
 
     <div id="c_tha" aria-labelledby="headingThree">
-
+            {% if _get['type'] == 'avg' or _get['type'] == ''%}
             <div class="row mt-4">
                 <div class="col-lg-12 col-m-12 col-sm-12 col-12">
                    <div class="ol d-flex justify-content-center">
-                   <a href="?p=chart&chart=d" class="{% if (_get['chart'] == 'd') or (_get['chart'] == '')%}active{% endif %} ce nr">24 Hours</a>
-                   <a href="?p=chart&chart=w" class="{% if _get['chart'] == 'w'%}active{% endif %} ce nr">Week</a>
-                   <a href="?p=chart&chart=m" class="{% if _get['chart'] == 'm'%}active{% endif %} ce nr">Month</a>
+                   <a href="?p=chart&type=avg&chart=d" class="{% if (_get['chart'] == 'd') or (_get['chart'] == '')%}active{% endif %} ce nr">24 Hours</a>
+                   <a href="?p=chart&type=avg&chart=w" class="{% if _get['chart'] == 'w'%}active{% endif %} ce nr">Week</a>
+                   <a href="?p=chart&type=avg&chart=m" class="{% if _get['chart'] == 'm'%}active{% endif %} ce nr">Month</a>
                    </div>
                 </div>
             </div>
@@ -27,16 +44,16 @@
                    <script>new Chart(document.getElementById("chartjs-tmp"),{"type":"line","data": {
                                                                                                  "labels":[{{ x_axis_string|raw }}],
                                                                                                  "datasets":[{
-                                                                                                       "label":"Temperature",
+                                                                                                       "label":"Avg. Temperature",
                                                                                                        "data":[{{ temperature_string|raw }}],
                                                                                                        "fill":false,
-                                                                                                       "borderColor":"rgb(75, 192, 192)",
+                                                                                                       "borderColor":"rgb(0, 204, 102)",
                                                                                                        "lineTension":0.1
                                                                                                        },{
-                                                                                                       "label":"Humidity",
+                                                                                                       "label":"Avg. Humidity",
                                                                                                        "data":[{{ humidity_string|raw }}],
                                                                                                        "fill":false,
-                                                                                                       "borderColor":"rgb(0, 204, 102)",
+                                                                                                       "borderColor":"rgb(75, 192, 192)",
                                                                                                        "lineTension":0.1}
                                                                                                        //{
                                                                                                        //"label":"CO2",
@@ -48,7 +65,52 @@
                                                                                                    }, 
                                                                                                   "options":{scales:{yAxes:[{ticks:{beginAtZero:true}}]}}});</script>
             </div>
-
+            {% endif %}
+            
+            {% if _get['type'] == 'hilo'%}
+            <div class="row mt-4">
+                <div class="col-lg-12 col-m-12 col-sm-12 col-12">
+                   <div class="ol d-flex justify-content-center">
+                   <a href="?p=chart&type=hilo&chart=w" class="{% if (_get['chart'] == 'w') or (_get['chart'] == '')%}active{% endif %} ce nr">Week</a>
+                   <a href="?p=chart&type=hilo&chart=m" class="{% if _get['chart'] == 'm'%}active{% endif %} ce nr">Month</a>
+                   <a href="?p=chart&type=hilo&chart=y" class="{% if _get['chart'] == 'y'%}active{% endif %} ce nr">Year</a>
+                   </div>
+                </div>
+            </div>
+            <div class="row mt-4">
+                   <canvas id="chartjs-hilo" class="chartjs" height="200" style="display: block;"></canvas>
+                   <script>new Chart(document.getElementById("chartjs-hilo"),{"type":"line","data": {
+                                                                                                 "labels":[{{ hilo_x_string|raw }}],
+                                                                                                 "datasets":[{
+                                                                                                       "label":"Daily High Temp",
+                                                                                                       "data":[{{ hitemp_string|raw }}],
+                                                                                                       "fill":false,
+                                                                                                       "borderColor":"rgb(75, 192, 192)",
+                                                                                                       "lineTension":0.1
+                                                                                                       },
+                                                                                                       {
+                                                                                                       "label":"Daily Low Temp",
+                                                                                                       "data":[{{ lotemp_string|raw }}],
+                                                                                                       "fill":false,
+                                                                                                       "borderColor":"rgb(255, 128, 0)",
+                                                                                                       "lineTension":0.1},
+                                                                                                       {
+                                                                                                       "label":"Daily High Humidity",
+                                                                                                       "data":[{{ hihumid_string|raw }}],
+                                                                                                       "fill":false,
+                                                                                                       "borderColor":"rgb(0, 204, 102)",
+                                                                                                       "lineTension":0.1},
+                                                                                                       {
+                                                                                                       "label":"Daily Low Humidity",
+                                                                                                       "data":[{{ lohumid_string|raw }}],
+                                                                                                       "fill":false,
+                                                                                                       "borderColor":"rgb(190, 150, 40)",
+                                                                                                       "lineTension":0.1}
+                                                                                                       ],
+                                                                                                   }, 
+                                                                                                  "options":{scales:{yAxes:[{ticks:{beginAtZero:true}}]}}});</script>
+            </div>
+            {% endif %}
 
     </div>
 

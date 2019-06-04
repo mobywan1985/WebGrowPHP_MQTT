@@ -98,7 +98,7 @@ function onMessageArrived(message) {
             humidity = msg[1];
             status_bar = '<span class="bqs d-none vk"></span>'+
             '<div class="p-2 text-success" >'+
-               '<span class="bpi">Temperature </span>'+Math.round(temperature)+'F'+
+               '<span class="bpi">Temperature </span>'+Math.round(temperature)+'{{scaleString}}'+
             '</div>'+
             '<span class="bqs d-none vk"></span>'+
             '<div class="p-2 text-info">'+
@@ -180,7 +180,7 @@ function loadStatus() {
         
            <span class="bqs d-none vk"></span>
             <div class="p-2 text-success" >
-               <span class="bpi">Temperature </span>{{temperature}}F
+               <span class="bpi">Temperature </span>{{temperature}}{{scaleString}}
             </div>
             <span class="bqs d-none vk"></span>
             <div class="p-2 text-info">
